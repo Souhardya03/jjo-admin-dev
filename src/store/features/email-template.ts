@@ -44,7 +44,7 @@ export const listingApi = baseApi
 					url: "/email-template",
 					method: "POST",
 					body: { name, subject, body },
-					credentials: "include",
+					// credentials: "include",
 				}),
 				invalidatesTags: ["add-Templates"],
 			}),
@@ -62,7 +62,7 @@ export const listingApi = baseApi
 					headers: {
 						"Content-Type": "application/json",
 					},
-					credentials: "include",
+					// credentials: "include",
 				}),
 				invalidatesTags: ["edit-Templates"],
 			}),
@@ -81,7 +81,7 @@ export const listingApi = baseApi
 					headers: {
 						"Content-Type": "application/json",
 					},
-					credentials: "include",
+					// credentials: "include",
 				}),
 				providesTags: ["get-Templates"],
 			}),
@@ -95,7 +95,7 @@ export const listingApi = baseApi
 					headers: {
 						"Content-Type": "application/json",
 					},
-					credentials: "include",
+					// credentials: "include",
 				}),
 				invalidatesTags: ["delete-Templates"],
 			}),
