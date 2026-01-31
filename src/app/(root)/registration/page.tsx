@@ -51,7 +51,7 @@ function Navbar() {
   return (
     <nav className="flex items-center justify-between px-8 py-4 bg-[#fdfbf7] border-b-2 border-[#eaddc7] sticky top-0 z-[100]">
       <div className="flex items-center gap-3">
-        <Image src={"/images/JJoLogo.png"} alt="JJO Logo" width={60} height={60}/>
+        <Image src={"/images/JJOLogo.png"} alt="JJO Logo" width={60} height={60}/>
         <span className="text-xl font-serif font-bold tracking-tight text-[#4a3f35]">
             JJO <span className="text-[#b49157]">Registration</span>
         </span>
