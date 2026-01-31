@@ -1,21 +1,22 @@
-# 📌 JJO Serverless Full Stack Application  
-### Next.js + AWS Lambda + API Gateway + DynamoDB + Custom Authorizer  
+# 📌 JJO Admin Panel  
+### Next.js + AWS Lambda + API Gateway + DynamoDB + Authorizer  
 
 ---
 
 ## 🚀 Project Overview  
 
-This is a **full-stack serverless web application** built using **Next.js** for the frontend and **AWS Lambda** for the backend.  
+This is a **full-stack web application** built using **Next.js** for the frontend and **AWS Lambda** for the backend.  
 All backend APIs are securely exposed using **AWS API Gateway**, and application data is stored in **Amazon DynamoDB**.  
 
-The project includes:  
+The project includes(till now):  
 
-- ✅ Custom Token-Based Authentication  
+- ✅ Custom Token-Based Authentication (for admins only)
 - ✅ API Gateway Custom Lambda Authorizer  
 - ✅ Admin Login System  
 - ✅ Members Management (CRUD)  
 - ✅ Email Template Management (CRUD)  
 - ✅ Email Sending Feature  
+- ✅ Efficient API State Management using TanStack Query
 
 This architecture ensures scalability, security, and minimal infrastructure management.  
 
@@ -27,23 +28,22 @@ This architecture ensures scalability, security, and minimal infrastructure mana
 - **Next.js (React Framework)**  
 - Tailwind CSS  
 - Fetch API / Axios  
+- TanStack Query (React Query) → API fetching + CRUD state management
 
 ### Backend  
-- **AWS Lambda (Node.js Runtime)**  
+- **AWS Lambda (Python)**  
 
 ### AWS Services  
 - **API Gateway** → Secure REST API routing  
-- **Custom Lambda Authorizer** → Token validation  
+- **Lambda Authorizer** → For accessing of api only by admin users 
 - **DynamoDB** → NoSQL database storage  
-- **IAM Roles & Policies** → Secure permissions  
-- **CloudWatch Logs** → Monitoring & debugging  
 
 ---
 
 ## 🌐 System Architecture  
 
 ```
-User → Next.js Frontend → API Gateway → Custom Authorizer → Lambda → DynamoDB
+User → Next.js Frontend → API Gateway → Authorizer → Lambda → DynamoDB
 ```
 
 ### Request Flow  
@@ -77,7 +77,7 @@ User → Next.js Frontend → API Gateway → Custom Authorizer → Lambda → D
 
 ---
 
-## Custom Authorizer  
+## Authorizer  
 
 | Lambda Function | Purpose |
 |----------------|---------|
@@ -98,11 +98,11 @@ Authorization: Bearer <token>
 Example in Next.js:
 
 ```js
-await fetch("/members", {
-  headers: {
-    Authorization: `Bearer ${token}`,
-  },
+const { data, isLoading } = useQuery({
+  queryKey: ["members"],
+  queryFn: fetchMembers,
 });
+
 ```
 
 ---
@@ -128,8 +128,8 @@ Provides full CRUD operations for JJO Members.
 |--------|----------|--------|
 | POST   | `/members` | Create_JJO_Members_DEV |
 | GET    | `/members` | Fetch_JJO_Members_DEV |
-| PUT    | `/members/{id}` | Update_JJO_Members_DEV |
-| DELETE | `/members/{id}` | Delete_JJO_Members_DEV |
+| PUT    | `/members?{id}` | Update_JJO_Members_DEV |
+| DELETE | `/members?{id}` | Delete_JJO_Members_DEV |
 
 ---
 
@@ -154,8 +154,8 @@ Manage reusable email templates stored in DynamoDB.
 |--------|----------|--------|
 | POST   | `/email-template` | Create_JJO_Email_Template_DEV |
 | GET    | `/email-template` | Fetch_JJO_Email_Template_DEV |
-| PUT    | `/email-template/{id}` | Update_JJO_Email_Template_DEV |
-| DELETE | `/email-template/{id}` | Delete_JJO_Email_Template_DEV |
+| PUT    | `/email-template?{id}` | Update_JJO_Email_Template_DEV |
+| DELETE | `/email-template?{id}` | Delete_JJO_Email_Template_DEV |
 
 ---
 
@@ -183,11 +183,34 @@ Send emails to members using templates.
 
 ## Members Table  
 
-| Attribute | Type | Key |
-|----------|------|-----|
-| memberId | String | Partition Key |
-| name     | String | Attribute |
-| email    | String | Attribute |
+### Primary Keys
+| Attribute | Type | Key Type | Description |
+| :--- | :--- | :--- | :--- |
+| **FamilyId** | `String` | **Partition Key (PK)** | Unique identifier for a family unit. |
+| **MemberId** | `String` | **Sort Key (SK)** | Unique identifier for an individual within a family. |
+
+### Attributes
+| Attribute | Type | Description |
+| :--- | :--- | :--- |
+| **UUID** | `String` | Global unique identifier (legacy/system ID). |
+| **Name** | `String` | Full name of the member. |
+| **Gender** | `String` | M / F / Other. |
+| **DOB** | `String` | Date of Birth (ISO-8601: YYYY-MM-DD). |
+| **EmailAddress** | `String` | Contact email address. |
+| **PhoneNo** | `String` | Contact phone number. |
+| **Activity** | `String` | Associated activity (e.g., Natok). |
+| **Amount** | `Number` | Deposit or contribution amount. |
+| **ForYear** | `String` | The financial/academic year (e.g., 2025/26). |
+| **TransactionID**| `String` | Reference ID for the payment transaction. |
+| **DepositDate** | `String` | Date the amount was deposited (ISO-8601). |
+| **Street** | `String` | Residential street address. |
+| **City** | `String` | City of residence. |
+| **State** | `String` | State / Province. |
+| **Zip** | `String` | Postal / Zip code. |
+| **WhatsappMember**| `Boolean`| Status of WhatsApp group membership. |
+| **Comments** | `String` | Additional notes or remarks. |
+| **CreatedAt** | `String` | System timestamp when the record was created. |
+
 
 ---
 
@@ -195,7 +218,8 @@ Send emails to members using templates.
 
 | Attribute | Type | Key |
 |----------|------|-----|
-| templateId | String | Partition Key |
+| id | String | Partition Key |
+| name    | String | Attribute |
 | subject    | String | Attribute |
 | body       | String | Attribute |
 
@@ -224,42 +248,7 @@ http://localhost:3000
 Create `.env.local`:
 
 ```env
-NEXT_PUBLIC_API_BASE_URL=https://your-api-id.execute-api.region.amazonaws.com/dev
+NEXT_PUBLIC_API_BASE_URL=https://clkovxgt00.execute-api.us-east-1.amazonaws.com/jjo-api
 ```
 
----
 
-# 📊 Monitoring  
-
-- Lambda Logs → CloudWatch  
-- API Gateway Logs enabled  
-- DynamoDB Metrics monitored via AWS Console  
-
----
-
-# 🔮 Future Enhancements  
-
-- Refresh token support  
-- Role-based access control  
-- Email scheduling system  
-- CI/CD automation  
-- AWS Cognito integration  
-
----
-
-# 👨‍💻 Author  
-
-Developed by **Shayan Kundu**  
-Full Stack Developer | Next.js | AWS Serverless  
-
----
-
-# ⭐ Conclusion  
-
-This project demonstrates a secure, scalable, serverless architecture using:
-
-✅ Next.js Frontend  
-✅ AWS Lambda Backend  
-✅ API Gateway + Custom Authorizer  
-✅ DynamoDB Database  
-✅ Members & Email Management Modules  
