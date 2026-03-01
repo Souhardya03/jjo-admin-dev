@@ -17,6 +17,7 @@ The project includes(till now):
 - ✅ Email Template Management (CRUD)  
 - ✅ Email Sending Feature  
 - ✅ Efficient API State Management using TanStack Query
+- ✅ Added member registration form
 
 This architecture ensures scalability, security, and minimal infrastructure management.  
 

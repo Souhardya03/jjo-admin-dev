@@ -1,855 +1,1428 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { format } from "date-fns";
+import React, { useEffect, useState } from "react";
 import {
-  Calendar as CalendarIcon,
-  MapPin,
-  Users,
-  Search,
-  Plus,
-  Clock,
-  Edit,
-  Trash2,
-  Image as ImageIcon,
-  CheckCircle2,
-  ArrowLeft,
-  Mail,
-  Mic2,
-  X,
-  Save,
-  MoreHorizontal,
-  Upload
+	Building2,
+	CalendarDays,
+	Ticket,
+	Plus,
+	Edit3,
+	Save,
+	MapPinned,
+	Activity,
+	CalendarClock,
+	Trash2,
+	ArrowLeft,
+	Users,
+	Loader2,
+	Mail,
+	Phone,
+	DollarSign,
+	Heart,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
 } from "@/components/ui/select";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
 } from "@/components/ui/table";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { cn } from "@/lib/utils";
-import Image from "next/image";
-import { Checkbox } from "@/components/ui/checkbox";
+import {
+	Card,
+	CardContent,
+	CardHeader,
+	CardTitle,
+	CardDescription,
+} from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+	useAddorganizationsMutation,
+	useDeleteorganizationMutation,
+	useEditorganizationsMutation,
+	useGetorganizationsQuery,
+} from "@/store/features/organization";
+import { useEditMembersMutation } from "@/store/features/members";
+import { toast } from "sonner";
+import {
+	useAddratesMutation,
+	useDeleteratesMutation,
+	useEditratesMutation,
+	useGetratesQuery,
+} from "@/store/features/rates-feature ";
+import { set } from "date-fns";
+import {
+	useAddeventsMutation,
+	useDeleteeventsMutation,
+	useEditeventsMutation,
+	useGeteventsQuery,
+} from "@/store/features/event-feature";
 
-// --- Types ---
-type EventStatus = "Upcoming" | "Draft" | "Completed" | "Cancelled";
-type Role = "Attendee" | "Speaker" | "VIP";
-type PartStatus = "Confirmed" | "Pending";
+// --- ERD-ALIGNED TYPES ---
 
-interface ScheduleItem {
-  id: string;
-  time: string;
-  title: string;
-  speaker?: string;
-  description?: string;
+interface EventMaster {
+	event_id: number;
+	org_id: number;
+	event_nm: string;
+	event_date: string;
+	event_alt_date: string;
+	event_venue_address_ln1: string;
+	event_venue_address_ln2: string;
+	event_venue_city: string;
+	event_venue_state: string;
+	event_venue_zip: string;
+	event_active_flg: "Y" | "N";
 }
 
-interface Participant {
-  id: string;
-  name: string;
-  email: string;
-  role: Role;
-  status: PartStatus;
-  avatar?: string;
+interface RatePlanMaster {
+	rate_plan_id: number;
+	event_id: number;
+	rate_plan_nm: string;
+	rate_plan_cd: string;
+	rate_plan_eff_dt: string;
+	rate_plan_end_dt: string;
+	rate_plan_adult_count: number;
+	rate_plan_child_count: number;
+	rate_plan_adult_amount: number;
+	rate_plan_child_amount: number;
 }
 
-interface Event {
-  id: string;
-  title: string;
-  description: string;
-  date: string; // Using ISO string for easier input handling
-  location: string;
-  status: EventStatus;
-  attendees: number;
-  capacity: number;
-  price: number;
-  image?: string;
-  schedule: ScheduleItem[];
-  participants: Participant[];
+interface EventRegistration {
+	event_registration_num: string;
+	primary_guest_email: string;
+	event_registration_date: string;
+	event_id: number;
+	rate_plan_id: number;
+	primary_guest_name: string;
+	primary_guest_address: string;
+	primary_guest_ph: string;
+	member_id: number;
+	adult_count: number;
+	child_count: number;
+	student_count: number;
+	senior_count: number;
+	total_amount: number;
+	additional_donation: number;
+	additional_donation_type: string;
 }
 
-// --- Mock Data ---
-const MOCK_EVENTS: Event[] = [
-  {
-    id: "1",
-    title: "Annual Tech Summit 2025",
-    description: "The biggest tech conference of the year featuring top speakers and networking opportunities.",
-    date: "2025-11-15T09:00",
-    location: "Convention Center, NY",
-    status: "Upcoming",
-    attendees: 450,
-    capacity: 500,
-    price: 199,
-    image: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&q=80&w=1000",
-    schedule: [
-      { id: "s1", time: "09:00", title: "Registration", description: "Lobby Area" },
-      { id: "s2", time: "10:00", title: "Keynote: Future of AI", speaker: "Dr. Sarah Conner" },
-    ],
-    participants: [
-        { id: "p1", name: "Alice Johnson", email: "alice@example.com", role: "Speaker", status: "Confirmed" },
-        { id: "p2", name: "Bob Smith", email: "bob@example.com", role: "Attendee", status: "Confirmed" },
-    ]
-  },
-  {
-    id: "2",
-    title: "React Workshop",
-    description: "Hands-on session to learn React hooks.",
-    date: "2025-10-20T14:00",
-    location: "Tech Hub, Room A",
-    status: "Upcoming",
-    attendees: 25,
-    capacity: 30,
-    price: 49,
-    image: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&q=80&w=1000",
-    schedule: [
-        { id: "s1", time: "14:00", title: "Intro to Hooks", speaker: "John Doe" },
-    ],
-    participants: [
-        { id: "p4", name: "David Wilson", email: "david@example.com", role: "Attendee", status: "Confirmed" },
-    ]
-  },
-];
+export default function MasterERDSystem() {
+	const [activeTab, setActiveTab] = useState("org");
+	const [selectedEventId, setSelectedEventId] = useState<number | null>(null);
 
-// --- Main Page Component ---
-const EventsPage = () => {
-  const [events, setEvents] = useState<Event[]>(MOCK_EVENTS);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState("all");
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+	const { data, isLoading: isOrganizationLoading } = useGetorganizationsQuery({
+		limit: 1000,
+	});
+	const org_data = data?.data;
 
-  // --- Create Form State ---
-  const [newScheduleItems, setNewScheduleItems] = useState<ScheduleItem[]>([]);
-  const [hasSchedule, setHasSchedule] = useState(false);
+	const { data: rateData, isLoading: isRateLoading } = useGetratesQuery({
+		limit: 1000,
+	});
+	const rate_data = rateData?.data;
 
-  // --- Handlers ---
-  const handleCreateEvent = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    
-    const newEvent: Event = {
-        id: Date.now().toString(),
-        title: formData.get("title") as string || "Untitled Event",
-        description: formData.get("description") as string || "",
-        date: formData.get("date") as string || new Date().toISOString(),
-        location: formData.get("location") as string || "TBD",
-        status: formData.get("status") as EventStatus || "Draft",
-        capacity: Number(formData.get("capacity")) || 0,
-        price: Number(formData.get("price")) || 0,
-        attendees: 0,
-        schedule: hasSchedule ? newScheduleItems : [],
-        participants: []
-    };
+	const { data: eventData, isLoading: isEventLoading } = useGeteventsQuery({
+		limit: 1000,
+	});
+	const event_data = eventData?.data;
 
-    setEvents([newEvent, ...events]);
-    setIsCreateOpen(false);
-    setNewScheduleItems([]);
-    setHasSchedule(false);
-  };
+	// --- GLOBAL STATES ---
+	const [orgs, setOrgs] = useState<any[]>([]);
+	const [events, setEvents] = useState<EventMaster[]>([
+		{
+			event_id: 101,
+			org_id: 1,
+			event_nm: "JECLAT 2k26",
+			event_date: "2026-02-14",
+			event_alt_date: "2026-02-15",
+			event_venue_address_ln1: "Main Campus",
+			event_venue_address_ln2: "Auditorium",
+			event_venue_city: "Jalpaiguri",
+			event_venue_state: "WB",
+			event_venue_zip: "73510",
+			event_active_flg: "Y",
+		},
+	]);
+	const [rates, setRates] = useState<RatePlanMaster[]>([
+		{
+			rate_plan_id: 501,
+			event_id: 101,
+			rate_plan_nm: "Standard Entry",
+			rate_plan_cd: "STD01",
+			rate_plan_eff_dt: "2026-01-01",
+			rate_plan_end_dt: "2026-02-10",
+			rate_plan_adult_count: 1,
+			rate_plan_child_count: 0,
+			rate_plan_adult_amount: 500.0,
+			rate_plan_child_amount: 250.0,
+		},
+	]);
 
-  const handleUpdateEvent = (updatedEvent: Event) => {
-    setEvents(events.map(ev => ev.id === updatedEvent.id ? updatedEvent : ev));
-    setSelectedEventId(null); // Go back to list view
-  };
+	const [registrations] = useState<EventRegistration[]>([
+		{
+			event_registration_num: "REG-001",
+			primary_guest_email: "souhardya@example.com",
+			event_registration_date: "2026-02-01",
+			event_id: 101,
+			rate_plan_id: 501,
+			primary_guest_name: "Souhardya Deb",
+			primary_guest_address: "Jalpaiguri, WB",
+			primary_guest_ph: "+91 9876543210",
+			member_id: 1001,
+			adult_count: 2,
+			child_count: 1,
+			student_count: 0,
+			senior_count: 0,
+			total_amount: 1250.0,
+			additional_donation: 100.0,
+			additional_donation_type: "Fest Fund",
+		},
+	]);
 
-  const handleDeleteEvent = (id: string) => {
-    setEvents(events.filter(e => e.id !== id));
-    setSelectedEventId(null);
-  };
+	return (
+		<div className="min-h-screen bg-slate-50   font-sans">
+			<div className="max-w-7xl mx-auto space-y-6 md:space-y-8">
+				{selectedEventId ? (
+					<div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+						<div className="flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
+							<div className="flex items-center gap-4">
+								<Button
+									variant="outline"
+									size="sm"
+									onClick={() => setSelectedEventId(null)}
+									className="rounded-full shadow-sm">
+									<ArrowLeft
+										size={16}
+										className="mr-2"
+									/>{" "}
+									Back
+								</Button>
+								<div>
+									<h2 className="text-xl md:text-2xl font-black">
+										{
+											events.find((e) => e.event_id === selectedEventId)
+												?.event_nm
+										}
+									</h2>
+									<p className="text-slate-500 text-xs font-bold uppercase tracking-wider">
+										Registration Master
+									</p>
+								</div>
+							</div>
+						</div>
+						<RegistrationModule
+							registrations={registrations.filter(
+								(r) => r.event_id === selectedEventId,
+							)}
+							rates={rates}
+						/>
+					</div>
+				) : (
+					<Tabs
+						value={activeTab}
+						onValueChange={setActiveTab}
+						className="space-y-6">
+						<div className="overflow-x-auto pb-2">
+							<TabsList className="bg-white p-1 rounded-2xl border border-slate-200 shadow-sm inline-flex h-auto min-w-max md:min-w-0">
+								<TabsTrigger
+									value="org"
+									className="rounded-xl px-4 md:px-8 py-2 md:py-3 data-[state=active]:bg-[#171e41] data-[state=active]:text-white gap-2 font-bold text-[10px] md:text-xs uppercase transition-all">
+									<Building2 size={16} /> Organization
+								</TabsTrigger>
+								<TabsTrigger
+									value="event"
+									className="rounded-xl px-4 md:px-8 py-2 md:py-3 data-[state=active]:bg-[#171e41] data-[state=active]:text-white gap-2 font-bold text-[10px] md:text-xs uppercase transition-all">
+									<CalendarDays size={16} /> Event Master
+								</TabsTrigger>
+								<TabsTrigger
+									value="rate"
+									className="rounded-xl px-4 md:px-8 py-2 md:py-3 data-[state=active]:bg-[#171e41] data-[state=active]:text-white gap-2 font-bold text-[10px] md:text-xs uppercase transition-all">
+									<Ticket size={16} /> Rate Plans
+								</TabsTrigger>
+							</TabsList>
+						</div>
 
-  const selectedEvent = events.find(e => e.id === selectedEventId);
+						{isOrganizationLoading ? (
+							<div className="flex h-64 w-full items-center justify-center">
+								<Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+							</div>
+						) : (
+							<TabsContent
+								value="org"
+								className="animate-in fade-in duration-300">
+								<OrganizationModule
+									data={org_data || []}
+									onUpdate={setOrgs}
+								/>
+							</TabsContent>
+						)}
 
-  // Filter Logic
-  const filteredEvents = events.filter((event) => {
-    const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase());
-    if (activeTab === "all") return matchesSearch;
-    return matchesSearch && event.status.toLowerCase() === activeTab;
-  });
-
-  const stats = {
-    total: events.length,
-    upcoming: events.filter((e) => e.status === "Upcoming").length,
-    past: events.filter((e) => e.status === "Completed").length,
-    attendees: events.reduce((acc, curr) => acc + curr.attendees, 0),
-  };
-
-  // --- Render Detail View ---
-  if (selectedEvent) {
-    return (
-      <EventDetailView 
-        initialEvent={selectedEvent} 
-        onBack={() => setSelectedEventId(null)} 
-        onSave={handleUpdateEvent}
-        onDelete={handleDeleteEvent}
-      />
-    );
-  }
-
-  // --- Render Dashboard ---
-  return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Events Management</h1>
-          <p className="text-sm text-gray-500">Create, edit and manage your events.</p>
-        </div>
-        <Button 
-          onClick={() => setIsCreateOpen(true)}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/20 rounded-xl"
-        >
-          <Plus className="w-4 h-4 mr-2" /> Create Event
-        </Button>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: "Total Events", value: stats.total, icon: CalendarIcon, color: "text-blue-600", bg: "bg-blue-50" },
-          { label: "Upcoming", value: stats.upcoming, icon: Clock, color: "text-indigo-600", bg: "bg-indigo-50" },
-          { label: "Completed", value: stats.past, icon: CheckCircle2, color: "text-emerald-600", bg: "bg-emerald-50" },
-          { label: "Total Attendees", value: stats.attendees, icon: Users, color: "text-amber-600", bg: "bg-amber-50" },
-        ].map((stat, i) => (
-          <div key={i} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-            <div className="flex items-center justify-between mb-2">
-              <div className={cn("p-2 rounded-lg", stat.bg)}>
-                <stat.icon className={cn("w-5 h-5", stat.color)} />
-              </div>
-            </div>
-            <div className="text-2xl font-bold text-gray-900">{stat.value}</div>
-            <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">{stat.label}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Content Tabs */}
-      <Tabs defaultValue="all" onValueChange={setActiveTab} className="w-full">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
-          <TabsList className="bg-white border border-gray-200 p-1 rounded-xl h-auto hidden sm:flex">
-            <TabsTrigger value="all" className="rounded-lg">All Events</TabsTrigger>
-            <TabsTrigger value="upcoming" className="rounded-lg">Upcoming</TabsTrigger>
-            <TabsTrigger value="draft" className="rounded-lg">Drafts</TabsTrigger>
-            <TabsTrigger value="completed" className="rounded-lg">Past</TabsTrigger>
-          </TabsList>
-
-          <div className="relative w-full md:w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <Input
-              placeholder="Search events..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 bg-white border-gray-200 rounded-xl"
-            />
-          </div>
-        </div>
-
-        <TabsContent value={activeTab} className="mt-0">
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {filteredEvents.map((event) => (
-                <EventCard 
-                key={event.id} 
-                event={event} 
-                onClick={() => setSelectedEventId(event.id)} 
-                />
-            ))}
-            </div>
-            {filteredEvents.length === 0 && (
-                <div className="p-12 text-center text-gray-500 bg-white rounded-2xl border border-dashed">
-                    No events found.
-                </div>
-            )}
-        </TabsContent>
-      </Tabs>
-
-      {/* Create Modal */}
-      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent className="sm:max-w-[600px] rounded-2xl max-h-[90vh] overflow-y-auto">
-          <form onSubmit={handleCreateEvent}>
-            <DialogHeader>
-                <DialogTitle>Create New Event</DialogTitle>
-                <DialogDescription>Enter event details below.</DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-6 py-4">
-                <div className="grid gap-2">
-                    <Label htmlFor="title">Title</Label>
-                    <Input id="title" name="title" required placeholder="Event Name" className="bg-gray-50" />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                        <Label htmlFor="date">Date</Label>
-                        <Input id="date" name="date" type="datetime-local" required className="bg-gray-50" />
-                    </div>
-                    <div className="grid gap-2">
-                        <Label htmlFor="status">Status</Label>
-                        <Select name="status" defaultValue="upcoming">
-                            <SelectTrigger className="bg-gray-50"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="upcoming">Upcoming</SelectItem>
-                                <SelectItem value="draft">Draft</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                </div>
-                <div className="grid gap-2">
-                    <Label htmlFor="location">Location</Label>
-                    <Input id="location" name="location" placeholder="Venue or Link" className="bg-gray-50" />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                        <Label htmlFor="capacity">Capacity</Label>
-                        <Input id="capacity" name="capacity" type="number" className="bg-gray-50" />
-                    </div>
-                    <div className="grid gap-2">
-                        <Label htmlFor="price">Price ($)</Label>
-                        <Input id="price" name="price" type="number" className="bg-gray-50" />
-                    </div>
-                </div>
-                <div className="grid gap-2">
-                    <Label htmlFor="description">Description</Label>
-                    <Textarea id="description" name="description" placeholder="Details..." className="bg-gray-50" />
-                </div>
-                
-                {/* Simple Schedule Builder for Create */}
-                <div className="space-y-3 pt-4 border-t">
-                    <div className="flex items-center space-x-2">
-                        <Checkbox id="hasSchedule" checked={hasSchedule} onCheckedChange={(c) => setHasSchedule(c as boolean)} />
-                        <Label htmlFor="hasSchedule">Add Schedule</Label>
-                    </div>
-                    {hasSchedule && (
-                        <div className="space-y-2 bg-gray-50 p-3 rounded-lg">
-                            {newScheduleItems.map((item, idx) => (
-                                <div key={idx} className="flex gap-2">
-                                    <Input value={item.time} onChange={e => {
-                                        const update = [...newScheduleItems];
-                                        update[idx].time = e.target.value;
-                                        setNewScheduleItems(update);
-                                    }} type="time" className="w-24 h-8 text-xs bg-white" />
-                                    <Input value={item.title} onChange={e => {
-                                        const update = [...newScheduleItems];
-                                        update[idx].title = e.target.value;
-                                        setNewScheduleItems(update);
-                                    }} placeholder="Session Title" className="flex-1 h-8 text-xs bg-white" />
-                                </div>
-                            ))}
-                            <Button type="button" variant="outline" size="sm" onClick={() => setNewScheduleItems([...newScheduleItems, { id: Date.now().toString(), time: "", title: "" }])}>
-                                Add Session
-                            </Button>
-                        </div>
-                    )}
-                </div>
-            </div>
-            <DialogFooter>
-                <Button variant="outline" type="button" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
-                <Button type="submit" className="bg-indigo-600 text-white">Create Event</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-};
-
-// --- SUB-COMPONENT: Editable Detail View ---
-
-interface DetailViewProps {
-    initialEvent: Event;
-    onBack: () => void;
-    onSave: (event: Event) => void;
-    onDelete: (id: string) => void;
+						<TabsContent
+							value="event"
+							className="animate-in fade-in duration-300">
+							<EventModule
+								data={event_data || []}
+								orgs={org_data || []}
+								onUpdate={setEvents}
+								onSelectEvent={setSelectedEventId}
+							/>
+						</TabsContent>
+						<TabsContent
+							value="rate"
+							className="animate-in fade-in duration-300">
+							<RateModule
+								data={rate_data || []}
+								events={events}
+								onUpdate={setRates}
+							/>
+						</TabsContent>
+					</Tabs>
+				)}
+			</div>
+		</div>
+	);
 }
 
-const EventDetailView = ({ initialEvent, onBack, onSave, onDelete }: DetailViewProps) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState<Event>(initialEvent);
+// --- 1. ORGANIZATION MODULE ---
+function OrganizationModule({
+	data,
+	onUpdate,
+}: {
+	data: any[];
+	onUpdate?: (data: any[]) => void;
+}) {
+	const [editingId, setEditingId] = useState<number | null>(null);
+	const [editForm, setEditForm] = useState({ org_name: "", org_type: "" });
 
-  // Sync if prop changes (optional)
-  useEffect(() => { setFormData(initialEvent); }, [initialEvent]);
+	// API Hooks
+	const [createOrg, { isLoading: isCreating }] = useAddorganizationsMutation();
+	const [updateOrg, { isLoading: isUpdating }] = useEditorganizationsMutation();
+	const [deleteOrg, { isLoading: isDeleting }] =
+		useDeleteorganizationMutation();
 
-  // Generic Field Handler
-  const handleChange = (field: keyof Event, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
+	const handleCreate = async () => {
+		try {
+			const newOrg = {
+				org_name: "New Organization",
+				org_type: "Educational",
+			};
+			toast.promise(createOrg(newOrg).unwrap(), {
+				loading: "Creating organization...",
+				success: "Organization created successfully",
+				error: "Failed to create organization",
+			});
+		} catch (error) {
+			toast.error("Failed to create organization");
+			console.error(error);
+		}
+	};
 
-  // Schedule Handlers
-  const handleScheduleChange = (id: string, field: keyof ScheduleItem, value: string) => {
-    setFormData(prev => ({
-        ...prev,
-        schedule: prev.schedule.map(item => item.id === id ? { ...item, [field]: value } : item)
-    }));
-  };
-  const addScheduleRow = () => {
-    setFormData(prev => ({
-        ...prev,
-        schedule: [...prev.schedule, { id: Date.now().toString(), time: "09:00", title: "", speaker: "" }]
-    }));
-  };
-  const deleteScheduleRow = (id: string) => {
-    setFormData(prev => ({ ...prev, schedule: prev.schedule.filter(s => s.id !== id) }));
-  };
+	const handleStartEdit = (org: any) => {
+		setEditingId(org.org_id);
+		setEditForm({ org_name: org.org_name, org_type: org.org_type });
+	};
 
-  // Participant Handlers
-  const handleParticipantChange = (id: string, field: keyof Participant, value: string) => {
-    setFormData(prev => ({
-        ...prev,
-        participants: prev.participants.map(p => p.id === id ? { ...p, [field]: value } : p)
-    }));
-  };
-  const addParticipant = () => {
-      setFormData(prev => ({
-          ...prev,
-          participants: [...prev.participants, { id: Date.now().toString(), name: "", email: "", role: "Attendee", status: "Pending" }]
-      }));
-  };
-  const deleteParticipant = (id: string) => {
-      setFormData(prev => ({ ...prev, participants: prev.participants.filter(p => p.id !== id) }));
-  };
+	const handleSaveEdit = async (id: string) => {
+		toast.promise(updateOrg({ org_id: id, data: editForm }).unwrap(), {
+			loading: "Updating organization...",
+			success: () => {
+				setEditingId(null);
+				return "Organization updated successfully";
+			},
+			error: "Failed to update organization",
+		});
+	};
 
-  return (
-    <div className="animate-in fade-in slide-in-from-right-8 duration-300 space-y-6 pb-20">
-      {/* Detail Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10 px-6 py-4 -mx-6 -mt-6 lg:-mx-8 lg:-mt-8 mb-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-         <div className="flex items-center gap-4 w-full">
-            <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full shrink-0">
-                <ArrowLeft className="w-5 h-5 text-gray-600" />
-            </Button>
-            <div className="flex-1 w-full">
-                {isEditing ? (
-                    <div className="space-y-2 w-full max-w-lg">
-                        <Input 
-                            value={formData.title} 
-                            onChange={(e) => handleChange("title", e.target.value)} 
-                            className="text-lg font-bold h-10" 
-                        />
-                        <div className="flex gap-2">
-                             <Input 
-                                type="datetime-local" 
-                                value={formData.date} 
-                                onChange={(e) => handleChange("date", e.target.value)}
-                                className="h-8 text-xs w-auto"
-                            />
-                            <Select 
-                                value={formData.status} 
-                                onValueChange={(val) => handleChange("status", val)}
-                            >
-                                <SelectTrigger className="h-8 text-xs w-[120px]"><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="Upcoming">Upcoming</SelectItem>
-                                    <SelectItem value="Draft">Draft</SelectItem>
-                                    <SelectItem value="Completed">Completed</SelectItem>
-                                    <SelectItem value="Cancelled">Cancelled</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </div>
-                ) : (
-                    <div>
-                        <h1 className="text-xl font-bold text-gray-900 flex items-center gap-3">
-                            {formData.title}
-                            <Badge variant="outline" className={cn(
-                                "font-normal",
-                                formData.status === "Upcoming" ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "bg-gray-100 text-gray-600"
-                            )}>{formData.status}</Badge>
-                        </h1>
-                        <p className="text-sm text-gray-500 flex items-center gap-2 mt-1">
-                            <CalendarIcon className="w-3.5 h-3.5" />
-                            {format(new Date(formData.date), "PPP p")} 
-                            <span className="text-gray-300">|</span>
-                            <MapPin className="w-3.5 h-3.5" />
-                            {formData.location}
-                        </p>
-                    </div>
-                )}
-            </div>
-         </div>
-         <div className="flex gap-2 shrink-0">
-            {isEditing ? (
-                <>
-                    <Button variant="outline" onClick={() => { setIsEditing(false); setFormData(initialEvent); }}>
-                        Cancel
-                    </Button>
-                    <Button className="bg-indigo-600 text-white" onClick={() => { onSave(formData); setIsEditing(false); }}>
-                        <Save className="w-4 h-4 mr-2" /> Save Changes
-                    </Button>
-                </>
-            ) : (
-                <>
-                    <Button variant="outline" onClick={() => setIsEditing(true)}>
-                        <Edit className="w-4 h-4 mr-2" /> Edit Event
-                    </Button>
-                    <Button variant="destructive" size="icon" onClick={() => onDelete(formData.id)}>
-                        <Trash2 className="w-4 h-4" />
-                    </Button>
-                </>
-            )}
-         </div>
-      </div>
+	const handleDelete = async (id: string) => {
+		if (confirm("Are you sure you want to delete this organization?")) {
+			toast.promise(deleteOrg(id).unwrap(), {
+				loading: "Deleting organization...",
+				success: "Organization deleted successfully",
+				error: (err) => err?.data?.message || "Failed to delete organization",
+			});
+		}
+	};
 
-      {/* Tabs */}
-      <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="bg-gray-100 p-1 rounded-xl w-full sm:w-auto overflow-x-auto justify-start">
-            <TabsTrigger value="overview" className="rounded-lg">Overview</TabsTrigger>
-            <TabsTrigger value="schedule" className="rounded-lg">Schedule</TabsTrigger>
-            <TabsTrigger value="participants" className="rounded-lg">Participants ({formData.participants.length})</TabsTrigger>
-        </TabsList>
+	return (
+		<Card className="rounded-[1.5rem] md:rounded-[2.5rem] border-none shadow-xl bg-white overflow-hidden">
+			<CardHeader className="p-6 md:p-8 border-b flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+				<div>
+					<CardTitle className="text-xl md:text-2xl font-black">
+						Organization Master
+					</CardTitle>
+					<CardDescription>Manage your institutional entities</CardDescription>
+				</div>
+				<Button
+					onClick={handleCreate}
+					disabled={isCreating}
+					className="w-full sm:w-auto rounded-xl bg-indigo-600 h-10 md:h-12 px-6">
+					{isCreating ? (
+						<Loader2
+							className="mr-2 animate-spin"
+							size={18}
+						/>
+					) : (
+						<Plus
+							className="mr-2"
+							size={18}
+						/>
+					)}
+					New Entry
+				</Button>
+			</CardHeader>
+			<div className="overflow-x-auto">
+				<Table>
+					<TableHeader className="bg-slate-50">
+						<TableRow>
+							<TableHead className="px-4 md:px-8 font-bold">ID</TableHead>
+							<TableHead className="font-bold">Name</TableHead>
+							<TableHead className="font-bold">Type</TableHead>
+							<TableHead className="text-right px-4 md:px-8 font-bold">
+								Actions
+							</TableHead>
+						</TableRow>
+					</TableHeader>
 
-        {/* --- OVERVIEW TAB --- */}
-        <TabsContent value="overview" className="mt-6 space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="md:col-span-2 space-y-6">
-                    <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
-                        <h3 className="font-semibold text-lg mb-4">About this Event</h3>
-                        {isEditing ? (
-                            <Textarea 
-                                value={formData.description}
-                                onChange={(e) => handleChange("description", e.target.value)}
-                                className="min-h-[150px] bg-gray-50"
-                            />
-                        ) : (
-                            <p className="text-gray-600 leading-relaxed whitespace-pre-wrap">{formData.description}</p>
-                        )}
-                        
-                        {isEditing && (
-                            <div className="mt-4">
-                                <Label>Location</Label>
-                                <Input 
-                                    value={formData.location} 
-                                    onChange={(e) => handleChange("location", e.target.value)}
-                                    className="mt-1 bg-gray-50"
-                                />
-                            </div>
-                        )}
-                    </div>
-                </div>
-                
-                <div className="md:col-span-1 space-y-4">
-                    <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
-                        <h3 className="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-4">Quick Stats</h3>
-                        <div className="space-y-4">
-                            <div className="flex justify-between items-center h-8">
-                                <span className="text-gray-600">Capacity</span>
-                                {isEditing ? (
-                                    <Input 
-                                        type="number" 
-                                        value={formData.capacity} 
-                                        onChange={(e) => handleChange("capacity", Number(e.target.value))}
-                                        className="w-20 h-8 text-right bg-gray-50"
-                                    />
-                                ) : (
-                                    <span className="font-medium">{formData.capacity}</span>
-                                )}
-                            </div>
-                            <div className="flex justify-between items-center h-8">
-                                <span className="text-gray-600">Registered</span>
-                                <span className="font-medium text-indigo-600">{formData.attendees}</span>
-                            </div>
-                            <div className="flex justify-between items-center h-8">
-                                <span className="text-gray-600">Ticket Price</span>
-                                {isEditing ? (
-                                    <Input 
-                                        type="number" 
-                                        value={formData.price} 
-                                        onChange={(e) => handleChange("price", Number(e.target.value))}
-                                        className="w-20 h-8 text-right bg-gray-50"
-                                    />
-                                ) : (
-                                    <span className="font-medium">${formData.price}</span>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </TabsContent>
+					{data.length === 0 && (
+						<TableBody>
+							<TableRow>
+								<TableCell
+									colSpan={4}
+									className="h-32 text-center text-slate-400 font-bold italic">
+									No organizations available.
+								</TableCell>
+							</TableRow>
+						</TableBody>
+					)}
+					<TableBody>
+						{data.map((org) => (
+							<TableRow key={org.org_id}>
+								<TableCell className="px-4 md:px-8 font-mono font-bold text-indigo-600 text-xs">
+									#{org.org_id}
+								</TableCell>
+								<TableCell>
+									{editingId === org.org_id ? (
+										<Input
+											value={editForm.org_name}
+											onChange={(e) =>
+												setEditForm({ ...editForm, org_name: e.target.value })
+											}
+											className="h-8"
+										/>
+									) : (
+										<span className="font-semibold text-sm">
+											{org.org_name}
+										</span>
+									)}
+								</TableCell>
+								<TableCell>
+									{editingId === org.org_id ? (
+										<Select
+											value={editForm.org_type}
+											onValueChange={(v) =>
+												setEditForm({ ...editForm, org_type: v })
+											}>
+											<SelectTrigger className="h-8">
+												<SelectValue />
+											</SelectTrigger>
+											<SelectContent>
+												<SelectItem value="Educational">Educational</SelectItem>
+												<SelectItem value="Corporate">Corporate</SelectItem>
+												<SelectItem value="NGO">NGO</SelectItem>
+											</SelectContent>
+										</Select>
+									) : (
+										<Badge
+											variant="secondary"
+											className="text-[10px]">
+											{org.org_type}
+										</Badge>
+									)}
+								</TableCell>
+								<TableCell className="text-right px-4 md:px-8">
+									<div className="flex justify-end gap-1">
+										{editingId === org.org_id ? (
+											<Button
+												variant="ghost"
+												disabled={isUpdating}
+												size="sm"
+												onClick={() => handleSaveEdit(org.org_id)}>
+												<Save
+													size={16}
+													className={
+														isUpdating
+															? "animate-pulse text-slate-400"
+															: "text-emerald-600"
+													}
+												/>
+											</Button>
+										) : (
+											<Button
+												variant="ghost"
+												size="sm"
+												onClick={() => handleStartEdit(org)}>
+												<Edit3 size={16} />
+											</Button>
+										)}
+										<Button
+											variant="ghost"
+											disabled={isDeleting}
+											size="sm"
+											onClick={() => handleDelete(org.org_id)}
+											className="text-red-400">
+											<Trash2 size={16} />
+										</Button>
+									</div>
+								</TableCell>
+							</TableRow>
+						))}
+					</TableBody>
+				</Table>
+			</div>
+		</Card>
+	);
+}
 
-        {/* --- SCHEDULE TAB --- */}
-        <TabsContent value="schedule" className="mt-6">
-            <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
-                <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                    <h3 className="font-semibold text-gray-900">Event Agenda</h3>
-                    {isEditing && (
-                        <Button size="sm" variant="outline" className="bg-white" onClick={addScheduleRow}>
-                            <Plus className="w-4 h-4 mr-2" /> Add Session
-                        </Button>
-                    )}
-                </div>
-                
-                {formData.schedule.length > 0 ? (
-                    <div className="divide-y divide-gray-100">
-                        {formData.schedule.map((item) => (
-                            <div key={item.id} className="p-4 sm:p-6 flex flex-col sm:flex-row gap-4 sm:gap-6 hover:bg-gray-50 transition-colors group items-start">
-                                {isEditing ? (
-                                    <div className="flex-1 w-full grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
-                                        <div className="md:col-span-2">
-                                            <Label className="text-[10px] text-gray-400">Time</Label>
-                                            <Input type="time" value={item.time} onChange={(e) => handleScheduleChange(item.id, "time", e.target.value)} className="bg-white" />
-                                        </div>
-                                        <div className="md:col-span-4">
-                                            <Label className="text-[10px] text-gray-400">Title</Label>
-                                            <Input value={item.title} onChange={(e) => handleScheduleChange(item.id, "title", e.target.value)} className="bg-white" />
-                                        </div>
-                                        <div className="md:col-span-3">
-                                            <Label className="text-[10px] text-gray-400">Speaker</Label>
-                                            <Input value={item.speaker || ""} onChange={(e) => handleScheduleChange(item.id, "speaker", e.target.value)} className="bg-white" />
-                                        </div>
-                                        <div className="md:col-span-2">
-                                             <Label className="text-[10px] text-gray-400">Desc</Label>
-                                            <Input value={item.description || ""} onChange={(e) => handleScheduleChange(item.id, "description", e.target.value)} className="bg-white" />
-                                        </div>
-                                        <div className="md:col-span-1 pt-4 flex justify-end">
-                                             <Button variant="ghost" size="icon" onClick={() => deleteScheduleRow(item.id)} className="text-red-500"><Trash2 className="w-4 h-4" /></Button>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    // READ ONLY VIEW
-                                    <>
-                                        <div className="min-w-[100px] flex flex-row sm:flex-col items-center sm:items-start gap-2">
-                                            <Badge variant="secondary" className="font-mono">{item.time}</Badge>
-                                        </div>
-                                        <div className="flex-1">
-                                            <h4 className="font-semibold text-gray-900 text-lg">{item.title}</h4>
-                                            {item.description && <p className="text-gray-500 mt-1">{item.description}</p>}
-                                            {item.speaker && (
-                                                <div className="flex items-center gap-2 mt-3 text-sm text-indigo-600 font-medium">
-                                                    <Mic2 className="w-4 h-4" />
-                                                    {item.speaker}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-                ) : (
-                    <div className="p-12 text-center">
-                        <Clock className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                        <h3 className="text-gray-900 font-medium">No schedule yet</h3>
-                        {isEditing ? (
-                             <Button variant="link" onClick={addScheduleRow}>Add your first session</Button>
-                        ) : (
-                            <p className="text-gray-500 text-sm">Switch to Edit mode to add agenda.</p>
-                        )}
-                    </div>
-                )}
-            </div>
-        </TabsContent>
+// --- 2. EVENT MODULE ---
+function EventModule({ data, orgs, onUpdate, onSelectEvent }: any) {
+	const [editId, setEditId] = useState<string | null>(null);
+	const [isProcessing, setIsProcessing] = useState(false);
 
-        {/* --- PARTICIPANTS TAB --- */}
-        <TabsContent value="participants" className="mt-6">
-            <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
-                <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                    <h3 className="font-semibold text-gray-900">Attendees List</h3>
-                    <div className="flex gap-2">
-                        {isEditing ? (
-                             <Button size="sm" onClick={addParticipant} className="bg-indigo-600 text-white">
-                                <Plus className="w-4 h-4 mr-2" /> Add Participant
-                             </Button>
-                        ) : (
-                            <>
-                                <Button size="sm" variant="outline" className="bg-white">Export CSV</Button>
-                                <Button size="sm" className="bg-indigo-600 text-white">Invite</Button>
-                            </>
-                        )}
-                    </div>
-                </div>
+	const [localEvents, setLocalEvents] = useState<any[]>([]);
 
-                <Table>
-                    <TableHeader>
-                        <TableRow className="bg-gray-50 hover:bg-gray-50">
-                            <TableHead>Participant</TableHead>
-                            <TableHead>Role</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {formData.participants.map((person) => (
-                            <TableRow key={person.id}>
-                                <TableCell>
-                                    {isEditing ? (
-                                        <div className="space-y-2">
-                                            <Input 
-                                                value={person.name} 
-                                                onChange={(e) => handleParticipantChange(person.id, "name", e.target.value)} 
-                                                placeholder="Name" 
-                                                className="h-8"
-                                            />
-                                            <Input 
-                                                value={person.email} 
-                                                onChange={(e) => handleParticipantChange(person.id, "email", e.target.value)} 
-                                                placeholder="Email" 
-                                                className="h-8"
-                                            />
-                                        </div>
-                                    ) : (
-                                        <div className="flex items-center gap-3">
-                                            <Avatar className="h-9 w-9">
-                                                <AvatarImage src={person.avatar} />
-                                                <AvatarFallback className="bg-indigo-100 text-indigo-700">
-                                                    {person.name.charAt(0)}
-                                                </AvatarFallback>
-                                            </Avatar>
-                                            <div>
-                                                <p className="font-medium text-gray-900">{person.name}</p>
-                                                <p className="text-xs text-gray-500">{person.email}</p>
-                                            </div>
-                                        </div>
-                                    )}
-                                </TableCell>
-                                <TableCell>
-                                    {isEditing ? (
-                                        <Select value={person.role} onValueChange={(val) => handleParticipantChange(person.id, "role", val)}>
-                                            <SelectTrigger className="h-8 w-[110px]"><SelectValue /></SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="Attendee">Attendee</SelectItem>
-                                                <SelectItem value="Speaker">Speaker</SelectItem>
-                                                <SelectItem value="VIP">VIP</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    ) : (
-                                        <Badge variant="outline" className={cn(
-                                            "border-0 font-medium",
-                                            person.role === "Speaker" ? "bg-purple-100 text-purple-700" :
-                                            person.role === "VIP" ? "bg-amber-100 text-amber-700" :
-                                            "bg-blue-50 text-blue-700"
-                                        )}>
-                                            {person.role}
-                                        </Badge>
-                                    )}
-                                </TableCell>
-                                <TableCell>
-                                    {isEditing ? (
-                                        <Select value={person.status} onValueChange={(val) => handleParticipantChange(person.id, "status", val)}>
-                                            <SelectTrigger className="h-8 w-[110px]"><SelectValue /></SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="Confirmed">Confirmed</SelectItem>
-                                                <SelectItem value="Pending">Pending</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    ) : (
-                                        <div className="flex items-center gap-2 text-sm">
-                                            <div className={cn("w-2 h-2 rounded-full", 
-                                                person.status === "Confirmed" ? "bg-green-500" : "bg-gray-300"
-                                            )} />
-                                            {person.status}
-                                        </div>
-                                    )}
-                                </TableCell>
-                                <TableCell className="text-right">
-                                    {isEditing ? (
-                                        <Button size="icon" variant="ghost" className="h-8 w-8 text-red-400 hover:text-red-600" onClick={() => deleteParticipant(person.id)}>
-                                            <Trash2 className="w-4 h-4" />
-                                        </Button>
-                                    ) : (
-                                        <Button size="icon" variant="ghost" className="h-8 w-8 text-gray-400 hover:text-indigo-600">
-                                            <Mail className="w-4 h-4" />
-                                        </Button>
-                                    )}
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-                
-                {formData.participants.length === 0 && (
-                    <div className="p-12 text-center text-gray-500">
-                        No participants registered yet.
-                    </div>
-                )}
-            </div>
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
-};
+	useEffect(() => {
+		if (data) setLocalEvents(data);
+	}, [data]);
 
+	const [addEvent] = useAddeventsMutation();
+	const [editEvent] = useEditeventsMutation();
+	const [deleteEvent] = useDeleteeventsMutation();
 
-// --- SUB-COMPONENT: List Item Card ---
-const EventCard = ({ event, onClick }: { event: Event, onClick: () => void }) => {
-  const isFull = event.attendees >= event.capacity;
-  const percentage = Math.round((event.attendees / event.capacity) * 100);
+	// --- 1. CREATE PART ---
+	const handleAddNewEvent = () => {
+		const tempId = String(Date.now());
+		const newEvent = {
+			event_id: tempId,
+			org_id: orgs[0]?.org_id || "",
+			event_name: "New Festival/Event",
+			event_date: new Date().toISOString().split("T")[0],
+			event_alt_date: "",
+			address_ln1: "",
+			address_ln2: "",
+			city: "",
+			state: "",
+			zip: "",
+			active_flag: "Y",
+		};
 
-  return (
-    <div 
-        onClick={onClick}
-        className="group bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all duration-200 overflow-hidden flex flex-col h-full cursor-pointer"
-    >
-      <div className="relative h-40 w-full bg-gray-100">
-        {event.image ? (
-            <div className="w-full h-full relative">
-                <Image src={event.image} alt={event.title} fill className="object-cover" />
-            </div>
-        ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-400">
-                <ImageIcon className="w-10 h-10" />
-            </div>
-        )}
-        <div className="absolute top-3 left-3">
-            <Badge className={cn("border-0 shadow-sm", event.status === "Upcoming" ? "bg-white/90 text-indigo-700" : "bg-gray-900/90 text-white")}>
-                {event.status}
-            </Badge>
-        </div>
-      </div>
+		setLocalEvents([newEvent, ...localEvents]);
+		setEditId(tempId);
+	};
 
-      <div className="p-5 flex-1 flex flex-col">
-        <div className="flex-1">
-            <div className="flex justify-between items-start gap-2 mb-2">
-                <h3 className="font-bold text-gray-900 line-clamp-2 leading-tight group-hover:text-indigo-600 transition-colors">
-                    {event.title}
-                </h3>
-            </div>
-            <p className="text-sm text-gray-500 line-clamp-2 mb-4">{event.description}</p>
-            <div className="space-y-2 text-sm text-gray-600">
-                <div className="flex items-center gap-2">
-                    <CalendarIcon className="w-4 h-4 text-indigo-500" />
-                    <span>{format(new Date(event.date), "PPP")}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-indigo-500" />
-                    <span className="truncate">{event.location}</span>
-                </div>
-            </div>
-        </div>
-        
-        <div className="mt-5 pt-4 border-t border-gray-100">
-            <div className="flex justify-between text-xs mb-1.5">
-                <span className="text-gray-500 font-medium">Attendees</span>
-                <span className={cn("font-semibold", isFull ? "text-red-600" : "text-indigo-600")}>
-                    {event.attendees} / {event.capacity}
-                </span>
-            </div>
-            <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
-                <div className={cn("h-full rounded-full", isFull ? "bg-red-500" : "bg-indigo-500")} style={{ width: `${Math.min(percentage, 100)}%` }} />
-            </div>
-        </div>
-      </div>
-    </div>
-  );
-};
+	const handleSave = async (id: string) => {
+		const targetEvent = localEvents.find((e) => e.event_id === id);
+		if (!targetEvent) return;
 
-export default EventsPage;
+		setIsProcessing(true);
+		try {
+			if (Number(id) > 1700000000000) {
+				const { event_id, ...payload } = targetEvent;
+				await toast.promise(addEvent(payload).unwrap(), {
+					loading: "Creating event...",
+					success: "Event created successfully!",
+					error: "Failed to create event",
+				});
+			} else {
+				await toast.promise(
+					editEvent({ event_id: id, data: targetEvent }).unwrap(),
+					{
+						loading: "Updating event...",
+						success: "Changes saved!",
+						error: "Failed to update",
+					},
+				);
+			}
+			setEditId(null);
+		} catch (error) {
+			console.error(error);
+		} finally {
+			setIsProcessing(false);
+		}
+	};
+
+	const handleDelete = async (id: string) => {
+		if (Number(id) > 1700000000000) {
+			setLocalEvents(localEvents.filter((e) => e.event_id !== id));
+			setEditId(null);
+			return;
+		}
+
+		if (confirm("Are you sure you want to delete this event?")) {
+			await toast.promise(deleteEvent(id).unwrap(), {
+				loading: "Deleting...",
+				success: "Event deleted",
+				error: "Error deleting event",
+			});
+		}
+	};
+
+	const updateLocalField = (id: string, field: string, value: any) => {
+		setLocalEvents((prev) =>
+			prev.map((evt) =>
+				evt.event_id === id ? { ...evt, [field]: value } : evt,
+			),
+		);
+	};
+
+	return (
+		<div className="space-y-6">
+			<div className="flex justify-between items-center">
+				<h2 className="text-xl font-black uppercase tracking-tight text-slate-400">
+					Events List
+				</h2>
+				<Button
+					onClick={handleAddNewEvent}
+					disabled={isProcessing || !!editId}
+					className="rounded-xl bg-indigo-600 shadow-lg hover:bg-indigo-700">
+					<Plus
+						className="mr-2"
+						size={18}
+					/>
+					Add Event
+				</Button>
+			</div>
+
+			{localEvents.length === 0 && (
+				<div className="flex flex-col items-center justify-center h-64 bg-white rounded-[2rem] border-2 border-dashed border-slate-200 text-slate-400">
+					<CalendarDays
+						size={48}
+						className="mb-4 opacity-20"
+					/>
+					<p className="font-bold italic">
+						No events found. Create your first event to get started.
+					</p>
+				</div>
+			)}
+
+			{localEvents.map((evt: any) => (
+				<Card
+					key={evt.event_id}
+					className="rounded-[1.5rem] md:rounded-[2rem] border-none shadow-xl bg-white p-6 md:p-10 space-y-6 overflow-hidden ring-1 ring-slate-100">
+					<div className="flex flex-col md:flex-row justify-between items-start gap-4 border-b pb-6">
+						<div className="space-y-4 w-full max-w-xl">
+							<div className="flex items-center gap-3">
+								<Badge className="bg-indigo-100 text-indigo-700 hover:bg-indigo-100 border-none px-3 py-1">
+									<Building2
+										size={12}
+										className="mr-2"
+									/>
+									{orgs.find((o: any) => o.org_id === evt.org_id)?.org_name ||
+										"Unlinked Org"}
+								</Badge>
+
+								<div onClick={(e) => e.stopPropagation()}>
+									<Select
+										disabled={editId !== evt.event_id}
+										value={evt.org_id?.toString()}
+										onValueChange={(v) =>
+											updateLocalField(evt.event_id, "org_id", v)
+										}>
+										<SelectTrigger className="h-8 rounded-lg bg-slate-50 border-none font-bold text-[10px] w-48 shadow-sm">
+											<SelectValue placeholder="Change Organization" />
+										</SelectTrigger>
+										<SelectContent>
+											{orgs.map((o: any) => (
+												<SelectItem
+													key={o.org_id}
+													value={o.org_id.toString()}>
+													{o.org_name}
+												</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
+								</div>
+							</div>
+
+							<div
+								className="group cursor-pointer"
+								onClick={() =>
+									editId !== evt.event_id && onSelectEvent(evt.event_id)
+								}>
+								{editId === evt.event_id ? (
+									<Input
+										className="text-lg md:text-2xl font-black h-12"
+										value={evt.event_name}
+										onClick={(e) => e.stopPropagation()}
+										onChange={(e) =>
+											updateLocalField(
+												evt.event_id,
+												"event_name",
+												e.target.value,
+											)
+										}
+									/>
+								) : (
+									<h3 className="text-lg md:text-3xl font-black text-[#171e41] group-hover:text-indigo-600 transition-all flex items-center gap-2">
+										{evt.event_name}
+										<ArrowLeft
+											className="rotate-180 opacity-0 group-hover:opacity-100 transition-opacity text-indigo-600"
+											size={20}
+										/>
+									</h3>
+								)}
+							</div>
+						</div>
+
+						<div className="flex gap-2 w-full md:w-auto">
+							<Button
+								variant={editId === evt.event_id ? "default" : "outline"}
+								className="flex-1 md:flex-none rounded-xl h-12 px-8 font-bold shadow-sm"
+								onClick={(e) => {
+									e.stopPropagation();
+									if (editId === evt.event_id) {
+										handleSave(evt.event_id);
+									} else {
+										setEditId(evt.event_id);
+									}
+								}}>
+								{editId === evt.event_id ? (
+									<Save
+										size={18}
+										className="mr-2"
+									/>
+								) : (
+									<Edit3
+										size={18}
+										className="mr-2"
+									/>
+								)}
+								{editId === evt.event_id ? "Save Changes" : "Manage Event"}
+							</Button>
+							<Button
+								variant="ghost"
+								onClick={(e) => {
+									e.stopPropagation();
+									handleDelete(evt.event_id);
+								}}
+								className="text-red-400 hover:text-red-600 hover:bg-red-50 h-12 w-12 rounded-xl">
+								<Trash2 size={20} />
+							</Button>
+						</div>
+					</div>
+
+					<div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+						<div className="space-y-4 md:col-span-2">
+							<div className="flex items-center gap-2 text-slate-400">
+								<MapPinned size={14} />
+								<Label className="text-[10px] uppercase font-black tracking-widest">
+									Venue Logistics
+								</Label>
+							</div>
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+								<div className="space-y-1">
+									<Label className="text-[9px] font-bold text-slate-400 uppercase ml-1">
+										Address Line 1
+									</Label>
+									<Input
+										placeholder="Address Line 1"
+										disabled={editId !== evt.event_id}
+										value={evt.address_ln1}
+										onClick={(e) => e.stopPropagation()}
+										onChange={(e) =>
+											updateLocalField(
+												evt.event_id,
+												"address_ln1",
+												e.target.value,
+											)
+										}
+									/>
+								</div>
+								<div className="space-y-1">
+									<Label className="text-[9px] font-bold text-slate-400 uppercase ml-1">
+										Address Line 2
+									</Label>
+									<Input
+										placeholder="Address Line 2"
+										disabled={editId !== evt.event_id}
+										value={evt.address_ln2}
+										onClick={(e) => e.stopPropagation()}
+										onChange={(e) =>
+											updateLocalField(
+												evt.event_id,
+												"address_ln2",
+												e.target.value,
+											)
+										}
+									/>
+								</div>
+								<div className="grid grid-cols-3 gap-2 col-span-1 md:col-span-2">
+									<div className="space-y-1">
+										<Label className="text-[9px] font-bold text-slate-400 uppercase ml-1">
+											City
+										</Label>
+										<Input
+											placeholder="City"
+											disabled={editId !== evt.event_id}
+											value={evt.city}
+											onClick={(e) => e.stopPropagation()}
+											onChange={(e) =>
+												updateLocalField(evt.event_id, "city", e.target.value)
+											}
+										/>
+									</div>
+									<div className="space-y-1">
+										<Label className="text-[9px] font-bold text-slate-400 uppercase ml-1">
+											State
+										</Label>
+										<Input
+											placeholder="State"
+											disabled={editId !== evt.event_id}
+											value={evt.state}
+											onClick={(e) => e.stopPropagation()}
+											onChange={(e) =>
+												updateLocalField(evt.event_id, "state", e.target.value)
+											}
+										/>
+									</div>
+									<div className="space-y-1">
+										<Label className="text-[9px] font-bold text-slate-400 uppercase ml-1">
+											Zip
+										</Label>
+										<Input
+											placeholder="Zip"
+											disabled={editId !== evt.event_id}
+											value={evt.zip}
+											onClick={(e) => e.stopPropagation()}
+											onChange={(e) =>
+												updateLocalField(evt.event_id, "zip", e.target.value)
+											}
+										/>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<div className="space-y-4 bg-slate-50 p-4 rounded-2xl ring-1 ring-slate-200/50">
+							<div className="flex items-center gap-2 text-indigo-500">
+								<CalendarClock size={14} />
+								<Label className="text-[10px] uppercase font-black tracking-widest">
+									Timeline
+								</Label>
+							</div>
+							<div className="space-y-3">
+								<div onClick={(e) => e.stopPropagation()}>
+									<span className="text-[9px] font-bold text-slate-400 uppercase ml-1">
+										Primary Date
+									</span>
+									<Input
+										type="date"
+										className="bg-white"
+										disabled={editId !== evt.event_id}
+										value={evt.event_date}
+										onChange={(e) =>
+											updateLocalField(
+												evt.event_id,
+												"event_date",
+												e.target.value,
+											)
+										}
+									/>
+								</div>
+								<div onClick={(e) => e.stopPropagation()}>
+									<span className="text-[9px] font-bold text-slate-400 uppercase ml-1">
+										Alt Date
+									</span>
+									<Input
+										type="date"
+										className="bg-white"
+										disabled={editId !== evt.event_id}
+										value={evt.event_alt_date}
+										onChange={(e) =>
+											updateLocalField(
+												evt.event_id,
+												"event_alt_date",
+												e.target.value,
+											)
+										}
+									/>
+								</div>
+								<div className="flex items-center justify-between gap-3 pt-2">
+									<Label className="text-[10px] font-bold text-slate-500 uppercase">
+										Status:
+									</Label>
+									<Badge
+										onClick={(e) => {
+											e.stopPropagation();
+											if (editId === evt.event_id) {
+												updateLocalField(
+													evt.event_id,
+													"active_flag",
+													evt.active_flag === "Y" ? "N" : "Y",
+												);
+											}
+										}}
+										className={`${evt.active_flag === "Y" ? "bg-emerald-500" : "bg-slate-300"} cursor-pointer`}>
+										{evt.active_flag === "Y" ? "Active" : "Inactive"}
+									</Badge>
+								</div>
+							</div>
+						</div>
+					</div>
+				</Card>
+			))}
+		</div>
+	);
+}
+// --- Types based on your new schema ---
+interface RatePlan {
+	rate_plan_id?: string;
+	rate_plan_name: string;
+	rate_plan_code: string;
+	effective_date: string;
+	end_date: string;
+	adult_count: number;
+	child_count: number;
+	adult_amount: number;
+	child_amount: number;
+	created_at?: string;
+}
+
+export function RateModule({ data, events, onUpdate }: any) {
+	const [editId, setEditId] = useState<string | null>(null);
+	const [isProcessing, setIsProcessing] = useState(false);
+
+	// 1. Add local state to allow immediate UI updates before backend save
+	const [localRates, setLocalRates] = useState<any[]>([]);
+
+	// 2. Keep local state in sync with RTK Query data
+	useEffect(() => {
+		if (data) setLocalRates(data);
+	}, [data]);
+
+	const [addRates, { error: addRateError, isError: addRateIsError }] =
+		useAddratesMutation();
+	const [updateRate] = useEditratesMutation();
+	const [deleteRate] = useDeleteratesMutation();
+
+	// --- 1. CREATE PART ---
+	const handleCreate = () => {
+		const tempId = `temp-${Math.random().toString(36).substring(2, 9)}`;
+		const newRate: RatePlan = {
+			rate_plan_id: tempId,
+			rate_plan_name: "New Plan",
+			rate_plan_code: "NEW",
+			effective_date: new Date().toISOString().split("T")[0],
+			end_date: new Date().toISOString().split("T")[0],
+			adult_count: 1,
+			child_count: 0,
+			adult_amount: 0,
+			child_amount: 0,
+		};
+
+		// Update local state so it appears immediately
+		setLocalRates([newRate, ...localRates]);
+		setEditId(tempId);
+	};
+
+	// Helper to update specific fields in local state while typing
+	const updateLocalField = (id: string, field: string, value: any) => {
+		setLocalRates((prev) =>
+			prev.map((r) => (r.rate_plan_id === id ? { ...r, [field]: value } : r)),
+		);
+	};
+
+	// --- 2. UPDATE PART ---
+	const handleSave = async (id: string, currentData: any) => {
+		setIsProcessing(true);
+		try {
+			if (id.startsWith("temp-")) {
+				const { rate_plan_id, ...payload } = currentData;
+				await toast.promise(addRates(payload).unwrap(), {
+					loading: "Creating rate plan...",
+					success: "Rate plan created successfully",
+					error: "Failed to create rate plan",
+				});
+			} else {
+				await toast.promise(
+					updateRate({ rate_plan_id: id, data: currentData }).unwrap(),
+					{
+						loading: "Updating rate plan...",
+						success: () => {
+							setEditId(null);
+							return "Rate plan updated successfully";
+						},
+						error: "Failed to update rate plan",
+					},
+				);
+			}
+		} catch (error) {
+			console.error(error);
+		} finally {
+			setIsProcessing(false);
+		}
+	};
+
+	// --- 3. DELETE PART ---
+	const handleDelete = async (id: string) => {
+		if (id.startsWith("temp-")) {
+			setLocalRates(localRates.filter((r) => r.rate_plan_id !== id));
+			setEditId(null);
+			return;
+		}
+
+		if (confirm("Delete this rate plan? This cannot be undone.")) {
+			setIsProcessing(true);
+			try {
+				await toast.promise(deleteRate(id).unwrap(), {
+					loading: "Removing rate plan...",
+					success: "Rate plan removed",
+					error: (err) => err?.data?.message || "Failed to delete rate plan",
+				});
+			} catch (error: any) {
+				console.error(error);
+			} finally {
+				setIsProcessing(false);
+			}
+		}
+	};
+
+	useEffect(() => {
+		if (addRateIsError) {
+			toast.error((addRateError as any).data.message);
+		}
+	}, [addRateError, addRateIsError]);
+
+	return (
+		<Card className="rounded-[1.5rem] md:rounded-[2.5rem] border-none shadow-xl bg-white overflow-hidden">
+			<CardHeader className="p-8 border-b flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+				<div>
+					<CardTitle className="text-xl md:text-2xl font-black">
+						Rate Plan Master
+					</CardTitle>
+					<CardDescription>
+						Define pricing tiers for your event registrations
+					</CardDescription>
+				</div>
+				<Button
+					onClick={handleCreate}
+					disabled={isProcessing}
+					className="rounded-xl bg-indigo-600 h-12 px-6 shadow-lg hover:bg-indigo-700 transition-all">
+					{isProcessing ? (
+						<Loader2
+							className="animate-spin mr-2"
+							size={18}
+						/>
+					) : (
+						<Plus
+							size={18}
+							className="mr-2"
+						/>
+					)}
+					Define New Rate
+				</Button>
+			</CardHeader>
+
+			<div className="overflow-x-auto">
+				<Table>
+					<TableHeader className="bg-slate-50">
+						<TableRow>
+							<TableHead className="font-bold text-[10px] uppercase text-slate-400">
+								Plan Details
+							</TableHead>
+							<TableHead className="font-bold text-[10px] uppercase text-slate-400">
+								Validity
+							</TableHead>
+							<TableHead className="font-bold text-[10px] uppercase text-slate-400 text-center">
+								Adult Tier
+							</TableHead>
+							<TableHead className="font-bold text-[10px] uppercase text-slate-400 text-center">
+								Child Tier
+							</TableHead>
+							<TableHead className="text-right px-6 font-bold text-[10px] uppercase text-slate-400">
+								Actions
+							</TableHead>
+						</TableRow>
+					</TableHeader>
+					{localRates.length === 0 && (
+						<TableBody>
+							<TableRow>
+								<TableCell
+									colSpan={5}
+									className="h-64 text-center text-slate-400 font-bold italic">
+									No rate plans available.
+								</TableCell>
+							</TableRow>
+						</TableBody>
+					)}
+					<TableBody>
+						{localRates.map((rp: any) => (
+							<TableRow
+								key={rp.rate_plan_id}
+								className="hover:bg-slate-50/50 transition-colors group">
+								<TableCell>
+									{editId === rp.rate_plan_id ? (
+										<div className="space-y-1">
+											<Input
+												className="h-8 text-xs font-bold"
+												value={rp.rate_plan_name}
+												onChange={(e) =>
+													updateLocalField(
+														rp.rate_plan_id,
+														"rate_plan_name",
+														e.target.value,
+													)
+												}
+											/>
+											<Input
+												className="h-7 text-[10px] font-mono uppercase"
+												placeholder="CODE"
+												value={rp.rate_plan_code}
+												onChange={(e) =>
+													updateLocalField(
+														rp.rate_plan_id,
+														"rate_plan_code",
+														e.target.value,
+													)
+												}
+											/>
+										</div>
+									) : (
+										<div className="space-y-1">
+											<p className="font-black text-slate-900 leading-tight">
+												{rp.rate_plan_name}
+											</p>
+											<Badge
+												variant="outline"
+												className="text-[9px] font-mono py-0">
+												{rp.rate_plan_code}
+											</Badge>
+										</div>
+									)}
+								</TableCell>
+
+								<TableCell>
+									<div className="flex flex-col gap-1">
+										<div className="flex items-center gap-1">
+											<span className="text-[9px] text-slate-400 font-bold w-6">
+												EFF
+											</span>
+											{editId === rp.rate_plan_id ? (
+												<Input
+													type="date"
+													className="h-7 text-[10px] w-28"
+													value={rp.effective_date}
+													onChange={(e) =>
+														updateLocalField(
+															rp.rate_plan_id,
+															"effective_date",
+															e.target.value,
+														)
+													}
+												/>
+											) : (
+												<span className="text-[11px] font-mono font-bold">
+													{rp.effective_date || "---"}
+												</span>
+											)}
+										</div>
+										<div className="flex items-center gap-1">
+											<span className="text-[9px] text-rose-400 font-bold w-6">
+												END
+											</span>
+											{editId === rp.rate_plan_id ? (
+												<Input
+													type="date"
+													className="h-7 text-[10px] w-28"
+													value={rp.end_date}
+													onChange={(e) =>
+														updateLocalField(
+															rp.rate_plan_id,
+															"end_date",
+															e.target.value,
+														)
+													}
+												/>
+											) : (
+												<span className="text-[11px] font-mono text-slate-400">
+													{rp.end_date || "Open"}
+												</span>
+											)}
+										</div>
+									</div>
+								</TableCell>
+
+								<TableCell className="text-center">
+									<div className="flex flex-col items-center">
+										<span className="text-[9px] text-slate-400 font-bold">
+											QTY / AMT
+										</span>
+										{editId === rp.rate_plan_id ? (
+											<div className="flex gap-1 mt-1">
+												<Input
+													type="number"
+													className="h-7 w-12 text-center text-xs"
+													value={rp.adult_count}
+													onChange={(e) =>
+														updateLocalField(
+															rp.rate_plan_id,
+															"adult_count",
+															parseInt(e.target.value),
+														)
+													}
+												/>
+												<Input
+													type="number"
+													className="h-7 w-16 text-center text-xs"
+													value={rp.adult_amount}
+													onChange={(e) =>
+														updateLocalField(
+															rp.rate_plan_id,
+															"adult_amount",
+															parseFloat(e.target.value),
+														)
+													}
+												/>
+											</div>
+										) : (
+											<div className="flex items-baseline gap-1 mt-1">
+												<span className="text-xs font-bold">
+													{rp.adult_count}x
+												</span>
+												<span className="text-sm font-black text-indigo-600">
+													${rp.adult_amount.toFixed(2)}
+												</span>
+											</div>
+										)}
+									</div>
+								</TableCell>
+
+								<TableCell className="text-center">
+									<div className="flex flex-col items-center">
+										<span className="text-[9px] text-slate-400 font-bold">
+											QTY / AMT
+										</span>
+										{editId === rp.rate_plan_id ? (
+											<div className="flex gap-1 mt-1">
+												<Input
+													type="number"
+													className="h-7 w-12 text-center text-xs"
+													value={rp.child_count}
+													onChange={(e) =>
+														updateLocalField(
+															rp.rate_plan_id,
+															"child_count",
+															parseInt(e.target.value),
+														)
+													}
+												/>
+												<Input
+													type="number"
+													className="h-7 w-16 text-center text-xs"
+													value={rp.child_amount}
+													onChange={(e) =>
+														updateLocalField(
+															rp.rate_plan_id,
+															"child_amount",
+															parseFloat(e.target.value),
+														)
+													}
+												/>
+											</div>
+										) : (
+											<div className="flex items-baseline gap-1 mt-1">
+												<span className="text-xs font-bold">
+													{rp.child_count}x
+												</span>
+												<span className="text-sm font-black text-emerald-600">
+													${rp.child_amount.toFixed(2)}
+												</span>
+											</div>
+										)}
+									</div>
+								</TableCell>
+
+								<TableCell className="text-right px-6">
+									<div className="flex justify-end gap-1">
+										<Button
+											variant="ghost"
+											size="sm"
+											onClick={() =>
+												editId === rp.rate_plan_id
+													? handleSave(rp.rate_plan_id, rp)
+													: setEditId(rp.rate_plan_id)
+											}>
+											{editId === rp.rate_plan_id ? (
+												<Save
+													size={16}
+													className="text-indigo-600"
+												/>
+											) : (
+												<Edit3 size={16} />
+											)}
+										</Button>
+										<Button
+											variant="ghost"
+											size="sm"
+											onClick={() => handleDelete(rp.rate_plan_id)}
+											className="text-red-400 hover:text-red-600 hover:bg-red-50">
+											<Trash2 size={16} />
+										</Button>
+									</div>
+								</TableCell>
+							</TableRow>
+						))}
+					</TableBody>
+				</Table>
+			</div>
+		</Card>
+	);
+}
+
+// --- NEW PARTICIPANTS (REGISTRATION) MODULE ---
+function RegistrationModule({
+	registrations,
+	rates,
+}: {
+	registrations: EventRegistration[];
+	rates: RatePlanMaster[];
+}) {
+	return (
+		<Card className="rounded-[2rem] border-none shadow-xl overflow-hidden bg-white">
+			<div className="overflow-x-auto">
+				<Table>
+					<TableHeader className="bg-slate-50">
+						<TableRow>
+							<TableHead className="px-6 py-4 font-black text-[10px] uppercase text-slate-400 tracking-widest">
+								Guest Information
+							</TableHead>
+							<TableHead className="font-black text-[10px] uppercase text-slate-400 tracking-widest">
+								Reference
+							</TableHead>
+							<TableHead className="font-black text-[10px] uppercase text-slate-400 tracking-widest">
+								Attendance
+							</TableHead>
+							<TableHead className="font-black text-[10px] uppercase text-slate-400 tracking-widest text-right px-6">
+								Payment
+							</TableHead>
+						</TableRow>
+					</TableHeader>
+					<TableBody>
+						{registrations.map((reg) => (
+							<TableRow
+								key={reg.event_registration_num}
+								className="hover:bg-slate-50/50 transition-colors align-top border-slate-100">
+								<TableCell className="px-6 py-6 min-w-[250px]">
+									<div className="space-y-3">
+										<p className="font-black text-xl text-slate-900 leading-tight">
+											{reg.primary_guest_name}
+										</p>
+										<div className="flex flex-col gap-1 text-xs font-bold text-slate-500">
+											<span className="flex items-center gap-2">
+												<Mail
+													size={12}
+													className="text-indigo-500"
+												/>{" "}
+												{reg.primary_guest_email}
+											</span>
+											<span className="flex items-center gap-2">
+												<Phone
+													size={12}
+													className="text-indigo-500"
+												/>{" "}
+												{reg.primary_guest_ph}
+											</span>
+										</div>
+									</div>
+								</TableCell>
+								<TableCell className="py-6">
+									<div className="space-y-2">
+										<Badge className="bg-slate-800 text-white border-none rounded-lg text-[10px] font-black uppercase tracking-tighter">
+											{
+												rates.find((r) => r.rate_plan_id === reg.rate_plan_id)
+													?.rate_plan_nm
+											}
+										</Badge>
+										<div className="flex flex-col text-[10px] text-slate-400 font-mono gap-0.5">
+											<span># {reg.event_registration_num}</span>
+											<span>MEM ID: {reg.member_id}</span>
+											<span>{reg.event_registration_date}</span>
+										</div>
+									</div>
+								</TableCell>
+								<TableCell className="py-6 min-w-[150px]">
+									<div className="grid grid-cols-2 gap-x-4 gap-y-1.5 border-l pl-4 border-slate-100">
+										<div className="flex flex-col">
+											<span className="text-[9px] font-black text-slate-300 uppercase">
+												Adult
+											</span>
+											<span className="text-sm font-black">
+												{reg.adult_count}
+											</span>
+										</div>
+										<div className="flex flex-col">
+											<span className="text-[9px] font-black text-slate-300 uppercase">
+												Child
+											</span>
+											<span className="text-sm font-black">
+												{reg.child_count}
+											</span>
+										</div>
+										<div className="flex flex-col">
+											<span className="text-[9px] font-black text-slate-300 uppercase">
+												Student
+											</span>
+											<span className="text-sm font-black">
+												{reg.student_count}
+											</span>
+										</div>
+										<div className="flex flex-col">
+											<span className="text-[9px] font-black text-slate-300 uppercase">
+												Senior
+											</span>
+											<span className="text-sm font-black">
+												{reg.senior_count}
+											</span>
+										</div>
+									</div>
+								</TableCell>
+								<TableCell className="text-right px-6 py-6">
+									<div className="space-y-2">
+										<div className="text-2xl font-black text-emerald-600 flex items-center justify-end gap-1">
+											<span className="text-sm opacity-50 font-bold">$</span>
+											{reg.total_amount.toFixed(2)}
+										</div>
+										{reg.additional_donation > 0 && (
+											<div className="inline-flex items-center gap-1.5 text-[10px] font-black text-rose-500 bg-rose-50 px-3 py-1.5 rounded-full ring-1 ring-rose-100 uppercase tracking-tighter">
+												<Heart
+													size={10}
+													fill="currentColor"
+												/>{" "}
+												Donation: {reg.additional_donation.toFixed(2)}
+											</div>
+										)}
+									</div>
+								</TableCell>
+							</TableRow>
+						))}
+					</TableBody>
+				</Table>
+				{registrations.length === 0 && (
+					<div className="p-20 text-center text-slate-300 font-bold italic">
+						No participant records found for this event.
+					</div>
+				)}
+			</div>
+		</Card>
+	);
+}
