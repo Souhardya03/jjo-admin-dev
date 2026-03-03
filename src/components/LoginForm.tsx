@@ -194,7 +194,7 @@ export default function MemberAuthFlow() {
 			if (res.success) {
 				localStorage.setItem("auth-token", res.token);
 				document.cookie = `auth-token=${res.token}; path=/; secure; samesite=lax`;
-				window.location.href = "/";
+				window.location.href = "/dashboard";
 			}
 		} catch (error) {
 			console.log(error);

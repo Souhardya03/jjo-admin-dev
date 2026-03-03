@@ -93,17 +93,20 @@ export const listingApi = baseApi
 					search?: string;
 					page?: number;
 					limit?: number;
-
+					event_slug?: string;
+					current_date?: string;
 					lastKey?: string;
 				}
 			>({
-				query: ({ search = "", limit = "", lastKey = "" }) => ({
+				query: ({ search = "", limit = "", lastKey = "", current_date = "",event_slug = "" }) => ({
 					url: "/events",
 					method: "GET",
 					params: {
 						search,
 						limit,
 						lastKey,
+						current_date,
+						event_slug
 					},
 					headers: {
 						"Content-Type": "application/json",

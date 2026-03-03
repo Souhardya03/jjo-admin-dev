@@ -19,6 +19,7 @@ import {
 	Loader2,
 	Award,
 	UserLock,
+	CalendarHeart,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -83,14 +84,24 @@ function Navbar() {
 					JJO <span className="text-[#b49157]">Registration</span>
 				</span>
 			</div>
-			<Link href="/login">
-				<Button
-					variant="ghost"
-					className="gap-2 text-[#4a3f35] hover:bg-[#b49157]/10 rounded-lg">
-					<UserLock className="w-4 h-4 text-[#b49157]" />
-					Admin
-				</Button>
-			</Link>
+			<div className="flex items-center gap-4">
+				<Link href="/events">
+					<Button
+						variant="ghost"
+						className="gap-2 text-[#4a3f35] hover:bg-[#b49157]/10 rounded-lg">
+						<CalendarHeart className="w-4 h-4 text-[#b49157]" />
+						Events
+					</Button>
+				</Link>
+				<Link href="/login">
+					<Button
+						variant="ghost"
+						className="gap-2 text-[#4a3f35] hover:bg-[#b49157]/10 rounded-lg">
+						<UserLock className="w-4 h-4 text-[#b49157]" />
+						Admin
+					</Button>
+				</Link>
+			</div>
 		</nav>
 	);
 }

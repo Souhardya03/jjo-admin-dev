@@ -31,6 +31,7 @@
     "clsx": "^2.1.1",
     "cookie": "^1.1.1",
     "date-fns": "^4.1.0",
+    "formik": "^2.4.9",
     "js-cookie": "^3.0.5",
     "lucide-react": "^0.553.0",
     "motion": "^12.23.24",
@@ -46,6 +47,7 @@
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0",
     "zod": "^4.3.6",
+    "zod-formik-adapter": "^2.0.0",
     "zustand": "^5.0.8"
   },
   "devDependencies": {
