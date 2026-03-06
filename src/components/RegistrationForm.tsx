@@ -80,22 +80,7 @@ function StripeSubmitSection({ isProcessing, onConfirm }: { isProcessing: boolea
             <div className="bg-white p-6 rounded-xl border border-[#eaddc7]">
 
                 <ExpressCheckoutElement onConfirm={() => onConfirm(stripe, elements)} />
-
-                <div className="relative my-8">
-                    <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-[#eaddc7]" /></div>
-                    <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-[#8c7e6d]">Or pay with card</span></div>
-                </div>
-
-                <PaymentElement options={{
-                    layout: {
-                        type: 'tabs', // This forces the tab view
-                        defaultCollapsed: false,
-                    },
-                    wallets: {
-                        googlePay: 'auto', // Attempts to force the button
-                        applePay: 'auto'
-                    }
-                }} />
+                <PaymentElement />
             </div>
             <Button
                 type="button"
