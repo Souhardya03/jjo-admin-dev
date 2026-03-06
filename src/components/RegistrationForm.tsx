@@ -41,8 +41,8 @@ import { useGetTemplatesQuery, useSendEmailMutation } from "@/store/features/ema
 const familyMemberSchema = z.object({
     Name: z.string().min(2, "Required"),
     Gender: z.string().min(1, "Required"),
-    DOB: z.date().optional(),
-    Email: z.string().email("Invalid email").optional().or(z.literal("")), // OPTIONAL EMAIL
+    DOB: z.coerce.date().optional(),           // ✅ Fix 3
+    Email: z.string().email("Invalid email").optional().or(z.literal("")),
     Activity: z.string().min(1, "Required"),
     OtherActivity: z.string().optional(),
     SameAddress: z.boolean().default(true),
@@ -57,7 +57,7 @@ const schema = z.object({
     Gender: z.string().min(1, "Required"),
     EmailAddress: z.string().email("Invalid email"),
     PhoneNo: z.string().min(10, "Invalid phone"),
-    DOB: z.date({ required_error: "DOB required" }),
+    DOB: z.coerce.date().refine((d) => !isNaN(d.getTime()), { message: "DOB required" }),  // ✅ Fix 1
     Invite_Code: z.string().length(6, "Invite code must be 6 characters"),
     Activity: z.string().min(1, "Required"),
     OtherActivity: z.string().optional(),
@@ -67,11 +67,10 @@ const schema = z.object({
     Zip: z.string().min(5, "Zip required"),
     PaymentMethod: z.enum(["Zelle", "PayPal"]),
     Amount: z.string().min(1, "Amount required"),
-    TransactionDate: z.date({ required_error: "Date required" }),
+    TransactionDate: z.coerce.date().refine((d) => !isNaN(d.getTime()), { message: "Date required" }), // ✅ Fix 1
     familyMembers: z.array(familyMemberSchema),
 });
-
-type FormData = z.infer<typeof schema>;
+type RegistrationFormValues = z.infer<typeof schema>;
 
 const FormError = ({ message }: { message?: string }) => {
     if (!message) return null;
@@ -102,7 +101,7 @@ export default function RegistrationForm() {
     const { data: getEmailTemplate } = useGetTemplatesQuery({ search: "Welcome Mail" });
     const email_template = getEmailTemplate?.data[0];
 
-    const { register, handleSubmit, control, setValue, watch, reset, formState: { errors } } = useForm<FormData>({
+    const { register, handleSubmit, control, setValue, watch, reset, formState: { errors } } = useForm<RegistrationFormValues, unknown, RegistrationFormValues>({
         resolver: zodResolver(schema),
         defaultValues: { PaymentMethod: "Zelle", familyMembers: [] },
     });
@@ -111,7 +110,7 @@ export default function RegistrationForm() {
     const primaryActivity = watch("Activity");
     const familyMembersWatch = watch("familyMembers");
 
-    const onSubmit = async (values: FormData) => {
+    const onSubmit = async (values: RegistrationFormValues) => {
         setIsLoopingCreation(true);
         try {
             const primaryPayload = {
@@ -135,7 +134,7 @@ export default function RegistrationForm() {
                             City: fam.SameAddress ? values.City : fam.City,
                             State: fam.SameAddress ? values.State : fam.State,
                             Zip: fam.SameAddress ? values.Zip : fam.Zip,
-                            EmailAddress: fam.Email || "", 
+                            EmailAddress: fam.Email || "",
                         };
                         return addMembers(famPayload).unwrap();
                     });
@@ -157,10 +156,10 @@ export default function RegistrationForm() {
                 toast.success("Registration completed successfully!");
                 reset();
             }
-        } catch (error: any) {
-            toast.error(error?.data?.message || "Registration failed.");
-        } finally {
-            setIsLoopingCreation(false);
+        } 
+        catch (error: unknown) {
+            const err = error as { data?: { message?: string } };
+            toast.error(err?.data?.message || "Registration failed.");
         }
     };
 
