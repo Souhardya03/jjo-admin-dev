@@ -99,7 +99,8 @@ export const listingApi = baseApi
       "delete-members",
       "get-codes",
       "create-code",
-      "delete-code"
+      "delete-code",
+      "verify-code"
     ],
   })
   .injectEndpoints({
@@ -236,6 +237,22 @@ export const listingApi = baseApi
         }),
         invalidatesTags: ["delete-code", "get-codes"],
       }),
+      verifyInviteCode: builder.mutation<
+        DeleteInviteCodeResponse, { code: string }
+      >({
+        query: ({ code }) => ({
+          url: `/members/invite-code/verify`,
+          method: "POST",
+          body: {
+            code
+          },
+          headers: {
+            "Content-Type": "application/json",
+          },
+          // credentials: "include",
+        }),
+        invalidatesTags: ["verify-code"],
+      }),
     }),
   });
 
@@ -248,4 +265,5 @@ export const {
   useGetInviteCodesQuery,
   useDeleteInviteCodeMutation,
   useRegisterMembersMutation,
+  useVerifyInviteCodeMutation
 } = listingApi;
