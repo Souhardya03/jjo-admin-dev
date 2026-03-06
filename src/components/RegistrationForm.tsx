@@ -41,11 +41,11 @@ import { useGetTemplatesQuery, useSendEmailMutation } from "@/store/features/ema
 const familyMemberSchema = z.object({
     Name: z.string().min(2, "Required"),
     Gender: z.string().min(1, "Required"),
-    DOB: z.coerce.date().optional(),           // ✅ Fix 3
+    DOB: z.date({ message: "Invalid date" }).optional(),           // ✅ Fix 3
     Email: z.string().email("Invalid email").optional().or(z.literal("")),
     Activity: z.string().min(1, "Required"),
     OtherActivity: z.string().optional(),
-    SameAddress: z.boolean().default(true),
+    SameAddress: z.boolean(),
     Street: z.string().optional(),
     City: z.string().optional(),
     State: z.string().optional(),
@@ -57,7 +57,7 @@ const schema = z.object({
     Gender: z.string().min(1, "Required"),
     EmailAddress: z.string().email("Invalid email"),
     PhoneNo: z.string().min(10, "Invalid phone"),
-    DOB: z.coerce.date().refine((d) => !isNaN(d.getTime()), { message: "DOB required" }),  // ✅ Fix 1
+    DOB: z.date({ message: "DOB required" }),  // ✅ Fix 1
     Invite_Code: z.string().length(6, "Invite code must be 6 characters"),
     Activity: z.string().min(1, "Required"),
     OtherActivity: z.string().optional(),
@@ -67,7 +67,7 @@ const schema = z.object({
     Zip: z.string().min(5, "Zip required"),
     PaymentMethod: z.enum(["Zelle", "PayPal"]),
     Amount: z.string().min(1, "Amount required"),
-    TransactionDate: z.coerce.date().refine((d) => !isNaN(d.getTime()), { message: "Date required" }), // ✅ Fix 1
+    TransactionDate: z.date({ message: "Date required" }), // ✅ Fix 1
     familyMembers: z.array(familyMemberSchema),
 });
 type RegistrationFormValues = z.infer<typeof schema>;
@@ -156,7 +156,7 @@ export default function RegistrationForm() {
                 toast.success("Registration completed successfully!");
                 reset();
             }
-        } 
+        }
         catch (error: unknown) {
             const err = error as { data?: { message?: string } };
             toast.error(err?.data?.message || "Registration failed.");
