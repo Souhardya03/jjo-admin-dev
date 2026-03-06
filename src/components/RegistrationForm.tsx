@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 
 // --- STRIPE ---
 import { loadStripe } from "@stripe/stripe-js";
-import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import { Elements, PaymentElement, useStripe, useElements, ExpressCheckoutElement } from "@stripe/react-stripe-js";
 
 // --- UI COMPONENTS ---
 import { Button } from "@/components/ui/button";
@@ -77,7 +77,15 @@ function StripeSubmitSection({ isProcessing, onConfirm }: { isProcessing: boolea
 
     return (
         <div className="space-y-6">
-            <div className="bg-white p-6 rounded-xl border border-[#eaddc7] animate-in fade-in zoom-in-95 duration-500">
+            <div className="bg-white p-6 rounded-xl border border-[#eaddc7]">
+
+                <ExpressCheckoutElement onConfirm={() => onConfirm(stripe, elements)} />
+
+                <div className="relative my-8">
+                    <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-[#eaddc7]" /></div>
+                    <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-[#8c7e6d]">Or pay with card</span></div>
+                </div>
+
                 <PaymentElement />
             </div>
             <Button
@@ -103,7 +111,7 @@ export default function RegistrationForm() {
 
     const [addMembers] = useRegisterMembersMutation();
     const [sendEmail] = useSendEmailMutation();
-    const [verifyInviteCode,{isError:isVerifyInviteCodeError,error:verifyInviteCodeError}] = useVerifyInviteCodeMutation();
+    const [verifyInviteCode, { isError: isVerifyInviteCodeError, error: verifyInviteCodeError }] = useVerifyInviteCodeMutation();
     const { data: getEmailTemplate } = useGetTemplatesQuery({ search: "Welcome Mail" });
     const email_template = getEmailTemplate?.data[0];
 
@@ -140,7 +148,7 @@ export default function RegistrationForm() {
             }
         };
 
-        if(isVerifyInviteCodeError){
+        if (isVerifyInviteCodeError) {
             toast.error((verifyInviteCodeError as any).data?.message);
         }
 
