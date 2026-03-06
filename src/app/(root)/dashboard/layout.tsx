@@ -9,7 +9,9 @@ import {
 	LogOut,
 	Menu,
 	
-	Mail
+	Mail,
+	Ticket,
+	UserStar
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -52,14 +54,19 @@ export default function AdminLayout({
 			icon: User,
 		},
 		{
-			name: "Settings",
-			href: "/dashboard/settings",
-			icon: Settings,
+			name: "Admins",
+			href: "/dashboard/admins",
+			icon: UserStar,
 		},
 		{
 			name: "Email Templates",
 			href: "/dashboard/email-templates",
 			icon: Mail,
+		},
+		{
+			name: "Invite Codes",
+			href: "/dashboard/invite-codes",
+			icon: Ticket,
 		},
 	];
 

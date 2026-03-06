@@ -83,7 +83,7 @@ export const baseApi = createApi({
 	endpoints: (builder) => ({
 		login: builder.mutation<Ilogin, unknown>({
 			query: ({ email, password }) => ({
-				url: "/admin",
+				url: "/admin/login",
 				method: "POST",
 				body: { email, password },
 			}),
@@ -130,9 +130,9 @@ export const baseApi = createApi({
 		}),
 		getProfile: builder.query<IUser, void>({
 			query: () => ({
-				url: "/auth/my-profile",
+				url: "/admin/my-profile",
 				method: "GET",
-				credentials: "include",
+				// credentials: "include",
 			}),
 			providesTags: ["getProfile"],
 		}),

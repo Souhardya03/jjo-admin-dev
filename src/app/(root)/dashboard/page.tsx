@@ -767,7 +767,6 @@ const ParticipantsPage = () => {
 			: selectedParticipant
 				? [selectedParticipant.UUID || selectedParticipant.id]
 				: [];
-		console.log(recipientIds);
 		if (recipientIds.length === 0) {
 			toast.error("No recipients selected.");
 			return;
@@ -785,7 +784,6 @@ const ParticipantsPage = () => {
 				subject: emailSubject,
 				body: emailBody,
 			}).unwrap();
-			console.log(res);
 			
 			if (res.success) {
 				toast.success("Email sent!");

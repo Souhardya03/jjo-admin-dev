@@ -389,11 +389,13 @@ const EmailTemplatesPage = () => {
 											<p className="font-semibold mb-2">
 												Available Placeholders:
 											</p>
-											<ul className="list-disc pl-4 space-y-1 text-xs">
-												<li>{"{{firstName}}"}</li>
-												<li>{"{{lastName}}"}</li>
-												<li>{"{{email}}"}</li>
-												<li>{"{{phone}}"}</li>
+											<ul className="list-disc pl-4 space-y-1 text-xs text-[#ffffff]">
+												<li><strong>First Name:</strong> {"{{firstName}}"}</li>
+												<li><strong>Last Name:</strong> {"{{lastName}}"}</li>
+												<li><strong>Email:</strong> {"{{email}}"}</li>
+												<li><strong>Phone:</strong> {"{{phone}}"}</li>
+												<li><strong>Enrolled Activity:</strong> {"{{activity}}"}</li>
+												<li><strong>Family Participants:</strong> {"{{familyMembers}}"}</li>
 											</ul>
 										</TooltipContent>
 									</Tooltip>

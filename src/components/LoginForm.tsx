@@ -198,7 +198,7 @@ export default function MemberAuthFlow() {
 			}
 		} catch (error) {
 			console.log(error);
-			toast.error("Invalid Credentials");
+			toast.error((error as any)?.data?.message || "Invalid Credentials");
 		} finally {
 			setIsLoading(false);
 		}
