@@ -285,7 +285,7 @@ export default function MemberAuthFlow() {
 						</div>
 
 						<div className="space-y-2">
-							<div className="flex items-center justify-between">
+							{/* <div className="flex items-center justify-between">
 								<Label htmlFor="loginPassword">Password</Label>
 								<button
 									type="button"
@@ -293,7 +293,7 @@ export default function MemberAuthFlow() {
 									className="text-sm font-medium text-blue-600 hover:text-blue-500 hover:underline dark:text-blue-400">
 									Forgot password?
 								</button>
-							</div>
+							</div> */}
 							<div className="relative">
 								<Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
 								<Input
@@ -612,7 +612,7 @@ export default function MemberAuthFlow() {
 			<CardContent>{renderContent()}</CardContent>
 
 			{/* Footer: Signup Link (Visible only on Login Page) */}
-			{currentStep === STEPS.LOGIN && (
+			{/* {currentStep === STEPS.LOGIN && (
 				<CardFooter className="flex justify-center border-t p-4 pt-6">
 					<div className="text-center text-sm text-gray-500 dark:text-gray-400">
 						Don&apos;t have an account?{" "}
@@ -623,7 +623,7 @@ export default function MemberAuthFlow() {
 						</Link>
 					</div>
 				</CardFooter>
-			)}
+			)} */}
 
 			{/* Footer: Return to Login (Visible on Forgot Password sub-pages) */}
 			{currentStep === STEPS.EMAIL && (
