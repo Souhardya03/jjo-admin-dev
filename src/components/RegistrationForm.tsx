@@ -435,7 +435,7 @@ export default function RegistrationForm() {
                                     <Image src="/logo/Stripe-Icon.svg" alt="Stripe" width={20} height={20} /> <span className="text-xs font-bold uppercase">Stripe</span>
                                 </button>
                                 <button type="button" onClick={() => setActiveMethod("paypal")} className={cn("flex items-center justify-center gap-3 py-4 rounded-xl border-2 transition-all", activeMethod === "paypal" ? "bg-white border-[#b49157] text-[#b49157] shadow-sm" : "bg-white/50 border-[#eaddc7] text-[#8c7e6d]")}>
-                                    <Image src="/logo/PayPal-Icon.png" alt="PayPal" width={20} height={20} /> <span className="text-xs font-bold uppercase">PayPal</span>
+                                    <Image src="/logo/Paypal-Icon.png" alt="PayPal" width={20} height={20} /> <span className="text-xs font-bold uppercase">PayPal</span>
                                 </button>
                             </div>
 
