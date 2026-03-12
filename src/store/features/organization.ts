@@ -23,6 +23,12 @@ export interface Organizations {
 	created_at: string;
 	org_slug: string;
 	org_type: string;
+	org_email: string;
+	org_phone: string;
+	street_address: string;
+	city: string;
+	state: string;
+	zip: string;
 }
 
 export interface AddUpdateResponse {

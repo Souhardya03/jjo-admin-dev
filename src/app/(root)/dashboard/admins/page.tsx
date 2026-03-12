@@ -201,7 +201,7 @@ export default function AdminManagement() {
                             <TableHeader className="bg-slate-50/50">
                                 <TableRow className="border-slate-100">
                                     <TableHead className="px-8 h-14 font-bold text-slate-500 uppercase text-[10px] tracking-widest">Admin</TableHead>
-                                    
+
                                     <TableHead className="font-bold text-slate-500 uppercase text-[10px] tracking-widest text-center">Status</TableHead>
                                     <TableHead className="text-right px-8 font-bold text-slate-500 uppercase text-[10px] tracking-widest">Control</TableHead>
                                 </TableRow>
@@ -330,18 +330,24 @@ export default function AdminManagement() {
                                 <Label className={cn("text-[10px] font-bold uppercase tracking-widest", formData.newPassword ? "text-indigo-600" : "text-slate-400")}>
                                     New Password {formData.newPassword && "(Required)"}
                                 </Label>
-                                <div className="flex gap-2">
-                                    <Input
-                                        type={showPass ? "text" : "password"}
-                                        value={formData.newPassword}
-                                        placeholder="Leave empty to keep current"
-                                        onChange={e => setFormData({ ...formData, newPassword: e.target.value })}
-                                        className="h-12 rounded-xl bg-white border-none flex-1 font-mono text-xs"
-                                    />
-                                    <button onClick={() => setShowPass(!showPass)} className="mr-2 text-slate-400 hover:text-indigo-600 transition-colors">
-                                        {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
-                                    </button>
-                                    <Button variant="outline" onClick={generatePassword} className="h-12 w-12 rounded-xl bg-white border-none">
+                                <div className="grid grid-cols-5 gap-2">
+                                    <div className='col-span-3'>
+
+                                        <Input
+                                            type={showPass ? "text" : "password"}
+                                            value={formData.newPassword}
+                                            placeholder="Leave empty to keep current"
+                                            onChange={e => setFormData({ ...formData, newPassword: e.target.value })}
+                                            className="h-12 w-full rounded-xl bg-white border-none flex-1 font-mono text-xs"
+                                        />
+                                    </div>
+                                    <div className='col-span-1 flex items-center justify-center'>
+
+                                        <Button onClick={() => setShowPass(!showPass)} className=" text-slate-400 hover:text-indigo-600 bg-transparent border-none flex items-center justify-center transition-colors">
+                                            {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                                        </Button>
+                                    </div>
+                                    <Button variant="outline" onClick={generatePassword} className="h-12 w-12 rounded-xl bg-white border-none col-span-1">
                                         <RefreshCw size={18} className="text-indigo-600" />
                                     </Button>
                                 </div>

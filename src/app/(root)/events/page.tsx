@@ -8,7 +8,7 @@ import {
 	Search,
 	CalendarHeart,
 	UserLock,
-    Loader2,
+	Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,9 +21,9 @@ import { useState } from "react";
 
 
 export default function EventsListing() {
-    const [searchEvent, setSearchEvent] = useState<string>("");
-	const { data:event_data, isLoading, error} = useGeteventsQuery({ limit: 1000,search:searchEvent });
-    const EVENTS = event_data?.data || []
+	const [searchEvent, setSearchEvent] = useState<string>("");
+	const { data: event_data, isLoading, error } = useGeteventsQuery({ limit: 1000, search: searchEvent });
+	const EVENTS = event_data?.data || []
 
 	return (
 		<>
@@ -78,67 +78,83 @@ export default function EventsListing() {
 						</div>
 					) : (
 						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-						{EVENTS.map((event) => (
-							<Card
-								key={event.event_id}
-								className="group relative border-none bg-white rounded-[2rem] p-8 shadow-xl hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 ease-out overflow-hidden">
-								{/* Top Section: Date & Status */}
-								<div className="flex justify-between items-start mb-8">
-									<div className="bg-[#f4f7f2] rounded-2xl p-3 text-center min-w-[60px] border border-[#eff5e6]">
-										<p className="text-[10px] font-bold text-[#b3c88a] uppercase">
-											{format(parseISO(event.event_date), "MMM")}
-										</p>
-										<p className="text-xl font-black text-[#2c3623]">
-											{format(parseISO(event.event_date), "dd")}
-										</p>
-									</div>
-									{event.active_flag === "Y" ? (
-										<Badge className="bg-[#b3c88a]/20 text-[#5a6b38] hover:bg-[#b3c88a]/30 border-none px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
-											Active
-										</Badge>
-									) : (
-										<Badge
-											variant="secondary"
-											className="px-4 py-1 rounded-full text-[10px] font-bold uppercase">
-											Inactive
-										</Badge>
-									)}
-								</div>
-
-								{/* Middle Section: Info */}
-								<div className="space-y-4 mb-10">
-									<h3 className="text-2xl font-black text-[#2c3623] leading-tight group-hover:text-[#5a6b38] transition-colors">
-										{event.event_name}
-									</h3>
-									<div className="flex items-center gap-2 text-gray-500 text-sm">
-										<div className="p-1.5 bg-[#fcfaf7] rounded-lg">
-											<MapPin className="w-4 h-4 text-[#b3c88a]" />
+							{EVENTS.map((event) => (
+								<Card
+									key={event.event_id}
+									className="group relative border-none bg-white rounded-[2rem] p-8 shadow-xl hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 ease-out overflow-hidden">
+									{/* Top Section: Date & Status */}
+									<div className="flex justify-between items-start mb-8">
+										<div className="bg-[#f4f7f2] rounded-2xl p-3 text-center min-w-[60px] border border-[#eff5e6]">
+											<p className="text-[10px] font-bold text-[#b3c88a] uppercase">
+												{format(parseISO(event.event_date), "MMM")}
+											</p>
+											<p className="text-xl font-black text-[#2c3623]">
+												{format(parseISO(event.event_date), "dd")}
+											</p>
 										</div>
-										<span className="font-medium">
-											{event.city}, {event.address_ln1}, {event.address_ln2}
-										</span>
+										{event.event_active_flg === true ? (
+											<Badge className="bg-[#b3c88a]/20 text-[#5a6b38] hover:bg-[#b3c88a]/30 border-none px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
+												Active
+											</Badge>
+										) : (
+											<Badge
+												variant="secondary"
+												className="px-4 py-1 rounded-full text-[10px] font-bold uppercase">
+												Inactive
+											</Badge>
+										)}
 									</div>
-								</div>
 
-								{/* Bottom Section: Action */}
-								<div className="flex items-center z-20 justify-between pt-4 border-t border-gray-50">
-									<span className="text-xs font-bold text-gray-400 uppercase tracking-tighter">
-										View Details
-									</span>
-									<Link href={`/events/${event.event_slug}`}>
-										<Button
-											size="icon"
-											className="rounded-full z-20 cursor-pointer bg-[#2c3623] hover:bg-[#b3c88a] text-white transition-all transform group-hover:scale-110 duration-300">
-											<ChevronRight className="w-5 h-5" />
-										</Button>
-									</Link>
-								</div>
+									{/* Middle Section: Info */}
+									<div className="space-y-4 mb-10">
+										<h3 className="text-2xl font-black text-[#2c3623] leading-tight group-hover:text-[#5a6b38] transition-colors">
+											{event.event_name}
+										</h3>
+										<div className="flex items-start gap-2 text-gray-500 text-sm">
+											<div className="p-1.5 bg-[#fcfaf7] rounded-lg">
+												<MapPin className="w-4 h-4 text-[#b3c88a]" />
+											</div>
+											<span className="font-medium">
+												{event.event_mode === "Online" ? (
+													<span className="flex flex-col items-center gap-2">
+														Virtual Event
+														{event.event_broadcast_link && (
+															<span className="text-[10px] bg-[#f0f4e8] text-[#5a6b38] px-2 py-0.5 rounded-full uppercase font-bold">
+																Live Stream
+															</span>
+														)}
+													</span>
+												) : (
+													<>
+														{event.event_venue_city}
+														{(event.event_venue_address_ln1 || event.event_venue_address_ln2) &&
+															`, ${[event.event_venue_address_ln1, event.event_venue_address_ln2].filter(Boolean).join(", ")}`
+														}
+													</>
+												)}
+											</span>
+										</div>
+									</div>
 
-								{/* Decorative background element */}
-								<div className="absolute -bottom-6 -right-6 w-24 h-24 bg-[#b3c88a]/5 rounded-full group-hover:scale-150 z-10 transition-transform duration-700" />
-							</Card>
-						))}
-					</div>
+									{/* Bottom Section: Action */}
+									<div className="flex items-center z-20 justify-between pt-4 border-t border-gray-50">
+										<span className="text-xs font-bold text-gray-400 uppercase tracking-tighter">
+											View Details
+										</span>
+										<Link href={`/events/${event.event_slug}`}>
+											<Button
+												size="icon"
+												className="rounded-full z-20 cursor-pointer bg-[#2c3623] hover:bg-[#b3c88a] text-white transition-all transform group-hover:scale-110 duration-300">
+												<ChevronRight className="w-5 h-5" />
+											</Button>
+										</Link>
+									</div>
+
+									{/* Decorative background element */}
+									<div className="absolute -bottom-6 -right-6 w-24 h-24 bg-[#b3c88a]/5 rounded-full group-hover:scale-150 z-10 transition-transform duration-700" />
+								</Card>
+							))}
+						</div>
 					)}
 				</div>
 			</div>

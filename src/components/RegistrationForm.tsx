@@ -241,33 +241,33 @@ export default function RegistrationForm() {
     return (
         <PayPalScriptProvider options={{ "clientId": process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "", currency: "USD" }}>
             <div className="min-h-screen bg-[#f8f5f0] pb-20 font-sans text-[#4a3f35]">
-                <nav className="flex items-center justify-between px-8 py-4 bg-[#fdfbf7] border-b-2 border-[#eaddc7] sticky top-0 z-[100]">
-                    <div className="flex items-center gap-3">
-                        <Image src="/images/JJOLogo.png" alt="JJO Logo" width={60} height={60} />
-                        <span className="text-xl font-serif font-bold tracking-tight text-[#4a3f35]">
-                            JJO <span className="text-[#b49157]">Registration</span>
+                <nav className="flex items-center justify-between px-4 md:px-8 py-4 bg-[#fdfbf7] border-b-2 border-[#eaddc7] sticky top-0 z-[100]">
+                    <div className="flex items-center gap-2 md:gap-3">
+                        <Image src="/images/JJOLogo.png" alt="JJO Logo" width={40} height={40} className="md:w-[60px] md:h-[60px]" />
+                        <span className="text-lg md:text-xl font-serif font-bold tracking-tight text-[#4a3f35]">
+                            JJO <span className="text-[#b49157] hidden sm:inline">Registration</span>
                         </span>
                     </div>
-                    <div className="flex items-center gap-4">
-                        <Link href="/events"><Button variant="ghost" className="gap-2"><CalendarHeart className="w-4 h-4 text-[#b49157]" />Events</Button></Link>
-                        <Link href="/login"><Button variant="ghost" className="gap-2"><UserLock className="w-4 h-4 text-[#b49157]" />Admin</Button></Link>
+                    <div className="flex items-center gap-2 md:gap-4">
+                        <Link href="/events"><Button variant="ghost" className="gap-1 md:gap-2 px-2 md:px-4 text-xs md:text-sm"><CalendarHeart className="w-4 h-4 text-[#b49157]" /><span className="hidden sm:inline">Events</span></Button></Link>
+                        <Link href="/login"><Button variant="ghost" className="gap-1 md:gap-2 px-2 md:px-4 text-xs md:text-sm"><UserLock className="w-4 h-4 text-[#b49157]" /><span className="hidden sm:inline">Admin</span></Button></Link>
                     </div>
                 </nav>
 
-                <main className="max-w-4xl mx-auto py-12 px-4">
-                    <div className="text-center mb-12">
-                        <Award className="w-10 h-10 text-[#b49157] mx-auto mb-4" />
-                        <h1 className="text-4xl font-serif font-bold text-[#2d2a26]">Member Enrolment</h1>
+                <main className="max-w-4xl mx-auto py-8 md:py-12 px-4">
+                    <div className="text-center mb-8 md:mb-12">
+                        <Award className="w-8 h-8 md:w-10 md:h-10 text-[#b49157] mx-auto mb-3 md:mb-4" />
+                        <h1 className="text-3xl md:text-4xl font-serif font-bold text-[#2d2a26]">Member Enrolment</h1>
                     </div>
 
                     <form className="space-y-8">
                         {/* 01. PRIMARY MEMBER (Same as Original) */}
                         <div className="bg-white rounded-2xl shadow-sm border border-[#eaddc7] overflow-hidden">
-                            <div className="bg-[#fdfbf7] px-8 py-4 border-b border-[#eaddc7] flex items-center gap-2">
+                            <div className="bg-[#fdfbf7] px-5 md:px-8 py-4 border-b border-[#eaddc7] flex items-center gap-2">
                                 <Info className="w-4 h-4 text-[#b49157]" />
                                 <h3 className="font-bold text-sm uppercase tracking-widest">01. Primary Member</h3>
                             </div>
-                            <div className="p-8 space-y-6">
+                            <div className="p-5 md:p-8 space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <div className="md:col-span-2 space-y-1.5">
                                         <Label className="font-semibold text-xs uppercase text-[#6b5f52]">Full Name</Label>
@@ -338,11 +338,11 @@ export default function RegistrationForm() {
 
                         {/* 02. MAILING ADDRESS (Same as Original) */}
                         <div className="bg-white rounded-2xl shadow-sm border border-[#eaddc7] overflow-hidden">
-                            <div className="bg-[#fdfbf7] px-8 py-4 border-b border-[#eaddc7] flex items-center gap-2">
+                            <div className="bg-[#fdfbf7] px-5 md:px-8 py-4 border-b border-[#eaddc7] flex items-center gap-2">
                                 <MapPin className="w-4 h-4 text-[#b49157]" />
                                 <h3 className="font-bold text-sm uppercase tracking-widest">02. Address</h3>
                             </div>
-                            <div className="p-8 space-y-4">
+                            <div className="p-5 md:p-8 space-y-4">
                                 <div className="space-y-1.5">
                                     <Input {...register("Street")} placeholder="Street Address" className={cn("h-11 border-[#eaddc7]", errors.Street && "border-red-500")} />
                                     <FormError message={errors.Street?.message} />
@@ -374,7 +374,7 @@ export default function RegistrationForm() {
                             </div>
                             <div className="grid gap-6">
                                 {fields.map((field, index) => (
-                                    <div key={field.id} className="group relative p-6 bg-white rounded-2xl border border-[#eaddc7] space-y-4 shadow-sm">
+                                    <div key={field.id} className="group relative p-5 md:p-6 bg-white rounded-2xl border border-[#eaddc7] space-y-4 shadow-sm">
                                         <Button type="button" variant="ghost" onClick={() => remove(index)} className="absolute -top-2 -right-2 bg-red-50 text-red-500 rounded-full w-8 h-8 p-0 border border-red-100 hover:bg-red-500 hover:text-white"><X className="w-4 h-4" /></Button>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
                                             <div className="space-y-1.5"><Label className="text-[10px] uppercase font-bold text-[#b49157]">Name</Label><Input placeholder="Full Name" {...register(`familyMembers.${index}.Name`)} className={cn("h-10 border-[#eaddc7]", errors.familyMembers?.[index]?.Name && "border-red-500")} /><FormError message={errors.familyMembers?.[index]?.Name?.message} /></div>
@@ -424,7 +424,7 @@ export default function RegistrationForm() {
                         </div>
 
                         {/* 03. PAYMENT DETAILS */}
-                        <div className="bg-[#f3ede4] rounded-2xl border-2 border-[#b49157]/20 p-8 space-y-6">
+                        <div className="bg-[#f3ede4] rounded-2xl border-2 border-[#b49157]/20 p-5 md:p-8 space-y-6">
                             <h3 className="font-bold text-[#2d2a26] text-center uppercase tracking-widest flex items-center justify-center gap-2">
                                 <DollarSign className="w-4 h-4 text-[#b49157]" /> Transfer Details
                             </h3>
@@ -462,7 +462,7 @@ export default function RegistrationForm() {
                                             )
                                         ) : (
                                             <div className="animate-in w-full flex flex-col items-center justify-center fade-in duration-500">
-                                                <div className="w-full ml-8" style={{ minWidth: "100%" }}>
+                                                <div className="w-full" style={{ minWidth: "100%" }}>
 
 
                                                     <PayPalButtons

@@ -295,6 +295,7 @@ export default function MemberAuthFlow() {
 								</button>
 							</div> */}
 							<div className="relative">
+								<Label htmlFor="loginPassword">Password</Label>
 								<Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
 								<Input
 									id="loginPassword"

@@ -25,6 +25,7 @@ export interface rates {
 	rate_plan_name: string;
 	effective_date: string;
 	rate_plan_id: string;
+	plan_details: string;
 }
 
 export interface AddUpdateResponse {
