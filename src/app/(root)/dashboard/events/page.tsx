@@ -1287,7 +1287,7 @@ function RegistrationModule({ event_id }: { event_id: string }) {
                 </div>
                 
                 <div className="flex gap-4">
-                    <div className="bg-white px-6 py-3 rounded-2xl shadow-sm border border-slate-50 flex items-center gap-6">
+                    <div className="bg-white px-6 py-3 rounded-2xl shadow-sm border 		border-slate-50 flex items-center gap-6">
                         <div className="text-right">
                             <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Total Revenue</p>
                             <p className="text-xl font-black text-emerald-600">${stats.total.toFixed(2)}</p>
@@ -1298,9 +1298,9 @@ function RegistrationModule({ event_id }: { event_id: string }) {
                             <p className="text-xl font-black text-slate-900">{stats.pax}</p>
                         </div>
                     </div>
-                    <Button variant="outline" className="h-14 w-14 rounded-2xl border-none shadow-sm bg-white text-slate-400 hover:text-indigo-600">
+                    {/* <Button variant="outline" className="h-14 w-14 rounded-2xl border-none shadow-sm bg-white text-slate-400 hover:text-indigo-600">
                         <Download size={20} />
-                    </Button>
+                    </Button> */}
                 </div>
             </div>
 
@@ -1376,9 +1376,9 @@ function RegistrationModule({ event_id }: { event_id: string }) {
 
             {/* --- FULL DETAILS MODAL --- */}
             <Dialog open={!!selectedReg} onOpenChange={() => setSelectedReg(null)}>
-                <DialogContent className=" w-full min-w-4xl rounded-[3rem] p-0 overflow-hidden border-none shadow-2xl bg-white">
+                <DialogContent className=" w-full min-w-4xl  rounded-xl p-0  border-none shadow-2xl bg-white">
                     {/* Dark Profile Header */}
-                    <div className="bg-[#0a0f1e] p-10 text-white relative">
+                    <div className="bg-[#0a0f1e] rounded-t-xl p-10 text-white relative">
                         <div className="flex justify-between items-start">
                             <div className="space-y-4">
                                 <div className="flex items-center gap-4">
@@ -1428,7 +1428,7 @@ function RegistrationModule({ event_id }: { event_id: string }) {
                         </div>
                     </div>
 
-                    <div className="p-10 grid grid-cols-12 gap-8">
+                    <div className="p-10 grid max-h-[90vh] overflow-y-auto grid-cols-12 gap-8">
                         {/* Column Left: Detailed Breakdown */}
                         <div className="col-span-8 space-y-8">
                             <section>
