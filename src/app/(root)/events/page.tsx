@@ -23,7 +23,7 @@ import { useState } from "react";
 export default function EventsListing() {
 	const [searchEvent, setSearchEvent] = useState<string>("");
 	const { data: event_data, isLoading, error } = useGeteventsQuery({ limit: 1000, search: searchEvent });
-	const EVENTS = event_data?.data || []
+	const events = Array.isArray(event_data?.data) ? event_data?.data : (event_data?.data ? [event_data?.data] : []);
 
 	return (
 		<>
@@ -66,7 +66,7 @@ export default function EventsListing() {
 								Gathering upcoming experiences...
 							</p>
 						</div>
-					) : EVENTS.length === 0 ? (
+					) : events.length === 0 ? (
 						<div className="text-center py-20 bg-white rounded-[2rem] border-2 border-dashed border-gray-100">
 							<CalendarHeart className="w-12 h-12 text-gray-300 mx-auto mb-4" />
 							<h3 className="text-xl font-bold text-[#2c3623]">
@@ -78,7 +78,7 @@ export default function EventsListing() {
 						</div>
 					) : (
 						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-							{EVENTS.map((event) => (
+							{events.map((event) => (
 								<Card
 									key={event.event_id}
 									className="group relative border-none bg-white rounded-[2rem] p-8 shadow-xl hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 ease-out overflow-hidden">
