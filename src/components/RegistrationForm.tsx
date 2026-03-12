@@ -31,6 +31,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useRegisterMembersMutation, useVerifyInviteCodeMutation } from "@/store/features/members";
 import Image from "next/image";
 import { useGetTemplatesQuery, useSendEmailMutation } from "@/store/features/email-template";
+import Navbar from "./NavBar";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
@@ -241,18 +242,7 @@ export default function RegistrationForm() {
     return (
         <PayPalScriptProvider options={{ "clientId": process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "", currency: "USD" }}>
             <div className="min-h-screen bg-[#f8f5f0] pb-20 font-sans text-[#4a3f35]">
-                <nav className="flex items-center justify-between px-4 md:px-8 py-4 bg-[#fdfbf7] border-b-2 border-[#eaddc7] sticky top-0 z-[100]">
-                    <div className="flex items-center gap-2 md:gap-3">
-                        <Image src="/images/JJOLogo.png" alt="JJO Logo" width={40} height={40} className="md:w-[60px] md:h-[60px]" />
-                        <span className="text-lg md:text-xl font-serif font-bold tracking-tight text-[#4a3f35]">
-                            JJO <span className="text-[#b49157] hidden sm:inline">Registration</span>
-                        </span>
-                    </div>
-                    <div className="flex items-center gap-2 md:gap-4">
-                        <Link href="/events"><Button variant="ghost" className="gap-1 md:gap-2 px-2 md:px-4 text-xs md:text-sm"><CalendarHeart className="w-4 h-4 text-[#b49157]" /><span className="hidden sm:inline">Events</span></Button></Link>
-                        <Link href="/login"><Button variant="ghost" className="gap-1 md:gap-2 px-2 md:px-4 text-xs md:text-sm"><UserLock className="w-4 h-4 text-[#b49157]" /><span className="hidden sm:inline">Admin</span></Button></Link>
-                    </div>
-                </nav>
+                <Navbar/>
 
                 <main className="max-w-4xl mx-auto py-8 md:py-12 px-4">
                     <div className="text-center mb-8 md:mb-12">
