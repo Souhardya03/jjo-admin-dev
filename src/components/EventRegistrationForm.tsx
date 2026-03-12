@@ -25,6 +25,7 @@ import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-
 import { PayPalButtons, PayPalScriptProvider } from "@paypal/react-paypal-js";
 import Image from "next/image";
 import { loadStripe } from "@stripe/stripe-js";
+import { log } from "console";
 
 // --- Interfaces ---
 interface SelectedPlan {
@@ -90,7 +91,7 @@ function StripeCheckout({ isProcessing, onConfirm }: { isProcessing: boolean, on
 export default function RegistrationSidebar({ isOpen, onClose, event }: any) {
     const [isMember, setIsMember] = useState(false);
     const [emailSearch, setEmailSearch] = useState("");
-    const [activeMethod, setActiveMethod] = useState<"card" | "paypal" | null>(null);
+    const [activeMethod, setActiveMethod] = useState<"stripe" | "paypal" | null>(null);
     const [clientSecret, setClientSecret] = useState<string | null>(null);
     const [loadingSecret, setLoadingSecret] = useState(false);
 
@@ -199,6 +200,8 @@ export default function RegistrationSidebar({ isOpen, onClose, event }: any) {
 
     
     const handlePaymentSuccess = async (transactionId: string) => {
+        
+        
         const apiPayload = {
             ...formik.values,
             event_id: event.event_id,
@@ -234,7 +237,7 @@ export default function RegistrationSidebar({ isOpen, onClose, event }: any) {
         const fetchSecret = async () => {
             const amount = formik.values.total_amount;
             const email = formik.values.primary_guest_email;
-            if (amount <= 0 || !z.string().email().safeParse(email).success || activeMethod !== "card") return;
+            if (amount <= 0 || !z.string().email().safeParse(email).success || activeMethod !== "stripe") return;
 
             setLoadingSecret(true);
             try {
@@ -386,8 +389,8 @@ export default function RegistrationSidebar({ isOpen, onClose, event }: any) {
                                 <div className="space-y-4 pt-4 border-t border-[#eaddc7]">
                                     <Label className="text-[10px] font-black uppercase tracking-widest text-[#b49157]">4. Payment Method</Label>
                                     <div className="grid grid-cols-2 gap-4">
-                                        <button type="button" onClick={() => setActiveMethod("card")} className={cn("flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all bg-white", activeMethod === "card" ? "border-[#b49157] shadow-md" : "border-[#eaddc7] opacity-60")}>
-                                            <CreditCard className="w-5 h-5" /> <span className="text-[10px] font-bold uppercase">Card / Stripe</span>
+                                        <button type="button" onClick={() => setActiveMethod("stripe")} className={cn("flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all bg-white", activeMethod === "stripe" ? "border-[#b49157] shadow-md" : "border-[#eaddc7] opacity-60")}>
+                                            <Image src="/logo/Stripe-Icon.svg" alt="Stripe" width={20} height={20} /> <span className="text-[10px] font-bold uppercase">Stripe</span>
                                         </button>
                                         <button type="button" onClick={() => setActiveMethod("paypal")} className={cn("flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all bg-white", activeMethod === "paypal" ? "border-[#0070ba] shadow-md" : "border-[#eaddc7] opacity-60")}>
                                             <Image src="/logo/Paypal-Icon.png" alt="PayPal" width={20} height={20} /> <span className="text-[10px] font-bold uppercase">PayPal</span>
@@ -404,7 +407,7 @@ export default function RegistrationSidebar({ isOpen, onClose, event }: any) {
                                         </div>
                                     </div>
 
-                                    {activeMethod === "card" && (
+                                    {activeMethod === "stripe" && (
                                         clientSecret ? (
                                             <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: 'flat', variables: { colorPrimary: '#b3c88a' } } }}>
                                                 <StripeCheckout isProcessing={isRegistering} onConfirm={handleStripeConfirm} />

@@ -1287,7 +1287,7 @@ function RegistrationModule({ event_id }: { event_id: string }) {
                 </div>
                 
                 <div className="flex gap-4">
-                    <div className="bg-white px-6 py-3 rounded-2xl shadow-sm border 		border-slate-50 flex items-center gap-6">
+                    <div className="bg-white px-6 py-3 rounded-2xl shadow-sm border 	border-slate-50 flex items-center gap-6">
                         <div className="text-right">
                             <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Total Revenue</p>
                             <p className="text-xl font-black text-emerald-600">${stats.total.toFixed(2)}</p>
@@ -1428,7 +1428,7 @@ function RegistrationModule({ event_id }: { event_id: string }) {
                         </div>
                     </div>
 
-                    <div className="p-10 grid max-h-[90vh] overflow-y-auto grid-cols-12 gap-8">
+                    <div className="p-10 grid max-h-[60vh] 2xl:max-h-[80vh] overflow-y-auto grid-cols-12 gap-8">
                         {/* Column Left: Detailed Breakdown */}
                         <div className="col-span-8 space-y-8">
                             <section>
